@@ -75,12 +75,17 @@ def boresight_unit(pose, noise_deg=0.0, rng=None):
     return b
 
 
-def pose_to_camera(pose):
+def pose_to_camera(pose, boresight=None):
     """
     Pose -> (R_cam, t_cam) with X_cam = R_cam @ P_leader + t_cam.
 
     This is exactly the (rvec, tvec) pair cv2.solvePnP estimates from
     leader-frame keypoints (rvec = Rodrigues(R_cam)).
+
+    boresight: where the gimbal really points (follower axes). Default: the
+    pose's own direction to its own leader, which is what the real camera
+    does for the TRUE pose. Pass the measured boresight to convert a wrong
+    (e.g. coarse classifier) pose consistently with how the image was formed.
     """
     x, y, z, roll, pitch, yaw = pose
     p = np.array([x, y, z])        # follower position, follower axes
@@ -88,11 +93,24 @@ def pose_to_camera(pose):
 
     # Leader CG in the follower frame is simply -p (attitude never moves it).
     # A leader point P is at R @ P - p in the follower frame.
-    R_c = camera_rotation(-p)
+    R_c = camera_rotation(-p if boresight is None else boresight)
 
     R_cam = R_c @ R
     t_cam = -R_c @ p
     return R_cam, t_cam
+
+
+def camera_to_pose(R_cam, t_cam, boresight):
+    """
+    Inverse of pose_to_camera: camera-frame (R_cam, t_cam), e.g. from
+    cv2.solvePnP, -> pose (6,). The follower->camera rotation is built from
+    the MEASURED boresight (the gimbal direction), not from the estimate.
+    R = R_c^T @ R_cam (leader -> follower), p = -R_c^T @ t_cam.
+    """
+    R_c = camera_rotation(boresight)
+    R = R_c.T @ R_cam
+    p = -R_c.T @ np.asarray(t_cam, dtype=float).ravel()
+    return np.array([*p, *R_to_euler(R)])
 
 
 # ---------------------------------------------------------------------------
