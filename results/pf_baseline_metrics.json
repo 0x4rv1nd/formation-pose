@@ -1,0 +1,26 @@
+{
+  "Classifier only": {
+    "pos_err_m_mean": 7.048443171525922,
+    "pos_err_m_std": 0.0,
+    "att_err_deg_mean": 5.0293264934276625,
+    "att_err_deg_std": 0.0,
+    "runtime_ms_per_step": 0.0,
+    "n_seeds": 1
+  },
+  "Config A (N=1000, alpha=0.9 every 10th step)": {
+    "pos_err_m_mean": 10.267219818661584,
+    "pos_err_m_std": 2.6700989933204116,
+    "att_err_deg_mean": 8.727802495764738,
+    "att_err_deg_std": 0.693888235510869,
+    "runtime_ms_per_step": 1.7678164245357901,
+    "n_seeds": 5
+  },
+  "Config B (N=5000, alpha=0.9 every step)": {
+    "pos_err_m_mean": 4.906229074548139,
+    "pos_err_m_std": 1.142849237960126,
+    "att_err_deg_mean": 5.190558800776818,
+    "att_err_deg_std": 0.5527308911134445,
+    "runtime_ms_per_step": 8.48148267504086,
+    "n_seeds": 5
+  }
+}

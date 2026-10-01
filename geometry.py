@@ -108,6 +108,35 @@ def project_points(pose, points=None):
     return uvw[:, :2] / uvw[:, 2:3]
 
 
+def project_points_batch(poses, boresight, points=None):
+    """
+    Project the leader keypoints for N poses at once -> (N, 14, 2) pixels.
+
+    Unlike project_points, the camera orientation comes from ONE given
+    boresight (where the gimbal really points), not from each pose's own
+    direction to its own leader. Particles that are wrong in position
+    therefore do not all put the leader at the image centre.
+    With boresight = the pose's own unit boresight this equals project_points.
+    """
+    if points is None:
+        points = config.KEYPOINTS
+    poses = np.atleast_2d(np.asarray(poses, dtype=float))
+    p = poses[:, :3]                                            # (N, 3)
+    R = Rotation.from_euler(
+        "ZYX", poses[:, [5, 4, 3]], degrees=True).as_matrix()   # (N, 3, 3)
+    R_c = camera_rotation(boresight)                            # same for all particles
+
+    # Keypoints in the follower frame: R @ P - p, then into the camera frame
+    pts_f = np.einsum("nij,kj->nki", R, points) - p[:, None, :]  # (N, K, 3)
+    X_cam = pts_f @ R_c.T
+    # Points behind the camera get a tiny positive depth: a huge pixel error
+    # instead of a division by zero or a mirrored image.
+    z = np.maximum(X_cam[..., 2], 1e-6)
+    u = config.FOCAL_PX * X_cam[..., 0] / z + config.CX
+    v = config.FOCAL_PX * X_cam[..., 1] / z + config.CY
+    return np.stack([u, v], axis=-1)
+
+
 # ---------------------------------------------------------------------------
 # Occlusion
 # ---------------------------------------------------------------------------

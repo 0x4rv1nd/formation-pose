@@ -8,7 +8,7 @@ The goal is to estimate the leader's relative pose (position + attitude) from th
 locations of 14 keypoints on the leader. Like the paper, we assume a perfect keypoint
 detector and use purely synthetic data.
 
-The project is built in 6 phases; this repository currently contains Phases 1 and 2.
+The project is built in 6 phases; this repository currently contains Phases 1 to 3.
 
 ## Setup
 
@@ -132,3 +132,87 @@ Diagnostic runs with the same architecture and training recipe:
 
 The 45-feature, +/-10 deg row is the final model. Pitch and yaw stay at +/-10 deg in the
 actual design because the later phases must handle them.
+
+## Phase 3: baseline particle filter
+
+A faithful implementation of the paper's particle filter (Section IV-E), **without any
+improvements** (those are Phases 4-5). It is meant as a fair reproduction, including the
+paper's weaknesses.
+
+| File | Purpose |
+|------|---------|
+| `filters.py` | `ParticleFilter`, observations, alpha schedules, `run_filter` |
+| `geometry.py` | `project_points_batch`: vectorised projection of many particles |
+| `run_phase3.py` | Experiments and figures |
+| `test_phase3.py` | Sanity checks (prints PASS/FAIL) |
+| `results/pf_baseline_metrics.json` | Numbers in the table below |
+
+```bash
+python test_phase3.py
+python run_phase3.py     # about 6 s for everything
+```
+
+### Algorithm
+
+Particle state `[x, y, z, roll, pitch, yaw, vx, vy, vz]` (pose as in `config.py`, relative velocity in m/s).
+
+1. **Initialise**: the classifier's pose for the first observation plus random rows of
+   `models/error_samples.npy` (its validation errors). Velocities uniform in +/-5 m/s.
+2. **Propagate** every step (dt = 0.1 s): position += velocity * dt, velocity += uniform
+   random acceleration in +/-`A_MAX` (2 m/s^2) * dt, roll/pitch/yaw += uniform random rate
+   in +/-`W_MAX` (20 deg/s) * dt.
+3. **Weights**: `w_i = 1 / (MSE_i + eps)`, where MSE_i is the mean squared pixel error between
+   the observed visible keypoints and particle i's projection (`eps` = 1e-3 px^2, `PF_EPS`),
+   then normalised. With fewer than 3 visible keypoints the weights are not updated.
+4. **Estimate** (before resampling): weighted mean of position and velocity; weighted mean
+   of attitude with `scipy Rotation.mean`.
+5. **Resample**: `floor(alpha * N)` particles by systematic resampling; the other
+   `N - floor(alpha * N)` are drawn fresh from the *current* classifier prediction plus
+   random error samples, with the current weighted mean velocity. `alpha` follows a
+   schedule (alpha = 1 is plain resampling).
+
+### Our simplifications
+
+- **Constant-velocity dynamics.** The paper treats the leader's unknown controls as a
+  random disturbance but does not fully specify the dynamics, so this is our own
+  constant-velocity approximation with uniform random accelerations and attitude rates.
+- **No occlusion for particles** (as in the paper, it is too expensive): only keypoints that
+  are visible in the actual observation are compared.
+- **Measured boresight.** The gimbal points at the *true* leader and its direction is known.
+  Particles are projected with that measured boresight, not with their own direction to
+  their own leader; otherwise every particle would put the leader at the image centre and
+  the weights could not tell them apart.
+- `eps`, the velocity range and when the weights are skipped are our choices; the paper
+  gives no values.
+
+### Results
+
+Approach trajectory, no keypoint noise, 5 seeds (mean +/- std over seeds of the
+time-averaged error). The classifier-only estimate is deterministic. Attitude error is the
+geodesic angle between the true and estimated rotations.
+
+| Method | Position error [m] | Attitude error [deg] | Runtime [ms/step] |
+|--------|-------------------|----------------------|-------------------|
+| Classifier only | 7.05 | 5.03 | - |
+| Config A (N = 1000, alpha = 0.9 every 10th step) | 10.27 +/- 2.67 | 8.73 +/- 0.69 | 1.8 |
+| Config B (N = 5000, alpha = 0.9 every step) | 4.91 +/- 1.14 | 5.19 +/- 0.55 | 8.5 |
+
+Errors over time (seed 0):
+
+![errors](results/pf_baseline_errors.png)
+
+True vs estimated position, Config B (seed 0):
+
+![trajectory](results/pf_baseline_trajectory.png)
+
+### Comparison with the paper
+
+Like the paper, the baseline filter does **not** clearly beat the classifier. Config A is
+*worse* than the classifier alone in both position and attitude: with only 1000 particles and
+fresh classifier particles on just every 10th step, the cloud drifts away from the truth
+between refreshes (the error grows, then drops when the particles are replaced). Config B
+reduces the mean position error (4.9 m vs 7.1 m, with a large spread between seeds), but its
+attitude error is no better than the classifier's, and it needs about 5x the particles.
+Neither configuration gets near an accurate estimate, which is the weakness Phases 4-5
+address. Only the trends should be compared with the paper: our keypoints, camera and
+occlusion model differ from the paper's, and the dynamics are our approximation.

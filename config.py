@@ -109,5 +109,15 @@ KEYPOINT_NOISE_PX = 0.0      # Gaussian pixel noise std (used in later phases)
 GIMBAL_NOISE_DEG = 0.0       # gimbal pointing error std (used in later phases)
 N_FEATURES = 3 * N_KEYPOINTS + 3   # 42 keypoint features + 3 gimbal direction = 45
 SEED = 0
+
+# ---------------------------------------------------------------------------
+# Particle filter (Phase 3 baseline)
+# ---------------------------------------------------------------------------
+DT = 0.1                     # time step between observations (s)
+A_MAX = 2.0                  # max random relative acceleration per axis (m/s^2)
+W_MAX = 20.0                 # max random attitude rate per axis (deg/s)
+V_INIT_MAX = 5.0             # initial particle velocities uniform in +/- this (m/s)
+PF_EPS = 1e-3                # added to the pixel MSE in the weight 1/(MSE + eps) (px^2)
+PF_MIN_VISIBLE = 3           # skip the weight update with fewer visible keypoints
 DATA_DIR = "data"
 RESULTS_DIR = "results"
