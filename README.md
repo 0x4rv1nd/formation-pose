@@ -8,7 +8,7 @@ The goal is to estimate the leader's relative pose (position + attitude) from th
 locations of 14 keypoints on the leader. Like the paper, we assume a perfect keypoint
 detector and use purely synthetic data.
 
-The project is built in 6 phases; this repository currently contains Phases 1 to 4.
+The project is built in 6 phases; this repository currently contains Phases 1 to 4b.
 
 ## Setup
 
@@ -351,3 +351,91 @@ frame) has fewer than 8 visible keypoints, so the benchmark says nothing about f
   about it.
 - The classifier still provides a coarse pose when PnP cannot run (fewer than 4 visible keypoints;
   this is what the fallback returns) and a prior for a filter, which is Phase 5.
+
+## Phase 4b: hybrid PnP and keypoint dropout
+
+Phase 4 could not test few-keypoint cases (no random pose has fewer than 8 visible keypoints),
+and a quick check suggested the classifier hurt there. This phase tests it properly.
+
+| File | Purpose |
+|------|---------|
+| `pnp.py` | added `hybrid_pnp(obs, coarse_pose)`; `classifier_pnp` is unchanged |
+| `train_dropout.py` | trains `models/classifier_dropout.pt` (same architecture and settings; 0-6 extra visible keypoints hidden per sample, re-drawn every batch). `models/classifier.pt` is untouched |
+| `run_phase4b.py` | dropout sweep, figure and metrics |
+| `results/pnp_dropout.png`, `pnp_dropout_metrics.json`, `classifier_dropout_metrics.json` | outputs |
+
+```bash
+python train_dropout.py
+python run_phase4b.py
+```
+
+- **Hybrid**: runs SQPnP (no guess) and classifier-initialised PnP, keeps the plausible solution with
+  the lower reprojection RMSE, and returns the coarse pose only if both fail.
+- **Classifier accuracy (top-1, validation)**:
+
+| Model | Normal validation | Validation with random dropout (0-6 hidden) |
+|-------|------|------|
+| Original | 59.2 % | 18.3 % |
+| Dropout-trained | 56.3 % | 52.5 % |
+
+  The dropout model gives up about 3 points on normal data and is far better when keypoints are missing.
+  (The dropout model trained for all 40 epochs without early stopping.)
+- **Sweep**: 2000 random poses, noise 2 and 5 px, 5 seeds. Extra keypoints are hidden so that about
+  4-6, 7-9 or 10+ stay visible (a random target in the range; keypoints are never added, so the 10+
+  group only uses poses that really have at least 10 visible), and the classifier features are
+  rebuilt from the reduced set. Cells are mean over seeds; "pos" in m, "att" in deg, shown as mean / median.
+  Gross failure = no solution, position > 10 m or attitude > 20 deg.
+
+| Noise | Visible | Method | Pos mean / med | Att mean / med | Fail % | Fallback % |
+|------|------|--------|------|------|------|------|
+| 2 px | 4-6 | PnP only | 1.45 / 0.73 | 5.44 / 2.14 | 2.8 | 0.0 |
+|  |  | Classifier + PnP (orig clf) | 5.71 / 0.73 | 4.46 / 2.18 | 5.8 | 4.7 |
+|  |  | Classifier + PnP (dropout clf) | 1.35 / 0.70 | 2.64 / 2.11 | 0.8 | 0.0 |
+|  |  | Hybrid (dropout clf) | 1.37 / 0.70 | 3.99 / 2.12 | 1.7 | 0.0 |
+|  | 7-9 | PnP only | 0.89 / 0.48 | 1.66 / 1.45 | 0.0 | 0.0 |
+|  |  | Classifier + PnP (orig clf) | 5.58 / 0.49 | 2.94 / 1.47 | 4.3 | 4.3 |
+|  |  | Classifier + PnP (dropout clf) | 0.87 / 0.48 | 1.65 / 1.44 | 0.0 | 0.0 |
+|  |  | Hybrid (dropout clf) | 0.87 / 0.48 | 1.65 / 1.44 | 0.0 | 0.0 |
+|  | 10+ | PnP only | 0.80 / 0.44 | 1.37 / 1.21 | 0.0 | 0.0 |
+|  |  | Classifier + PnP (orig clf) | 1.31 / 0.43 | 1.53 / 1.20 | 0.5 | 0.5 |
+|  |  | Classifier + PnP (dropout clf) | 0.80 / 0.43 | 1.37 / 1.20 | 0.0 | 0.0 |
+|  |  | Hybrid (dropout clf) | 0.77 / 0.43 | 1.37 / 1.20 | 0.0 | 0.0 |
+| 5 px | 4-6 | PnP only | 3.67 / 1.94 | 13.98 / 5.55 | 14.4 | 0.0 |
+|  |  | Classifier + PnP (orig clf) | 7.53 / 1.89 | 8.43 / 5.55 | 13.1 | 4.8 |
+|  |  | Classifier + PnP (dropout clf) | 3.35 / 1.79 | 6.80 / 5.36 | 8.7 | 0.0 |
+|  |  | Hybrid (dropout clf) | 3.39 / 1.82 | 11.46 / 5.46 | 11.8 | 0.0 |
+|  | 7-9 | PnP only | 2.50 / 1.30 | 4.87 / 3.63 | 4.2 | 0.0 |
+|  |  | Classifier + PnP (orig clf) | 6.96 / 1.23 | 5.27 / 3.66 | 6.6 | 4.5 |
+|  |  | Classifier + PnP (dropout clf) | 2.17 / 1.18 | 4.11 / 3.58 | 2.3 | 0.0 |
+|  |  | Hybrid (dropout clf) | 2.14 / 1.18 | 4.37 / 3.58 | 2.5 | 0.0 |
+|  | 10+ | PnP only | 2.35 / 1.30 | 3.49 / 2.98 | 2.7 | 0.0 |
+|  |  | Classifier + PnP (orig clf) | 2.59 / 1.10 | 3.58 / 2.96 | 1.6 | 0.6 |
+|  |  | Classifier + PnP (dropout clf) | 1.90 / 1.10 | 3.37 / 2.95 | 1.0 | 0.0 |
+|  |  | Hybrid (dropout clf) | 1.88 / 1.10 | 3.37 / 2.95 | 1.0 | 0.0 |
+
+Classifier-only numbers and no-solution counts are in `results/pnp_dropout_metrics.json`.
+
+![dropout sweep](results/pnp_dropout.png)
+
+### Conclusion
+
+- **The Phase 4 hint was a training-distribution problem, not a PnP problem.** With the original
+  classifier, classifier + PnP falls back to the coarse pose on about 4-5 % of frames when keypoints
+  are dropped (even at 7-9 visible), giving mean position errors of 5-6 m. With the dropout-trained
+  classifier the fallback rate is about 0.
+- **Medians barely change between methods** (all within a few percent): for typical frames,
+  PnP-only is already as accurate as anything else.
+- **The classifier helps in the tails.** With the dropout-trained classifier, classifier + PnP has the
+  lowest (or tied-lowest) gross-failure rate in every cell except 10+ visible at 2 px, where failures are
+  ~0 for every method (PnP-only and the hybrid 0.0 %, classifier + PnP 0.02 %): at 4-6 visible, 0.8 % vs 2.8 % for PnP-only at 2 px and
+  8.7 % vs 14.4 % at 5 px, and it halves the mean attitude error at 4-6 / 2 px (2.64 vs 5.44 deg). The gain
+  shrinks as more keypoints are visible and noise is low, and is zero in the median.
+- **The hybrid did not beat classifier + PnP (dropout clf).** It is equal or marginally better at 7+
+  visible, but worse at 4-6 visible (attitude mean 3.99 vs 2.64 deg and 1.7 % vs 0.8 % failures at
+  2 px), though still better than PnP-only. Choosing the solution with the lowest reprojection
+  error does not choose the one closest to the truth: with few noisy points, the wrong pose
+  can fit the pixels equally well, and the classifier's pose is the better tie-breaker. The hybrid's
+  advantage is robustness to a bad classifier (it is the safe choice with the original model).
+- **Summary**: the classifier is useful only as an initial guess that has seen missing keypoints, and
+  then it mainly removes occasional gross errors; it does not improve typical accuracy. These are
+  simulated, ideal-detector results (our occlusion model, Gaussian noise only).

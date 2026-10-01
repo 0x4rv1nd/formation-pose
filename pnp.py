@@ -101,3 +101,28 @@ def classifier_pnp(obs, coarse_pose):
     R_cam = cv2.Rodrigues(rvec)[0]
     pose = geometry.camera_to_pose(R_cam, tvec, obs.boresight)
     return pose, {"n_visible": len(obj), "rmse": _rmse(obj, img, rvec, tvec), "fallback": False}
+
+
+def hybrid_pnp(obs, coarse_pose):
+    """
+    Phase 4b. Run BOTH pnp_only (SQPnP, no guess) and classifier_pnp (iterative PnP from the
+    coarse pose) and keep the plausible solution with the lower reprojection RMSE. Falls
+    back to coarse_pose only if both fail, so a failed classifier+PnP no longer drags the
+    result to the coarse pose when SQPnP succeeded.
+    Returns (pose, info); info: n_visible, rmse, fallback, source ("sqpnp" | "classifier" | "coarse").
+    """
+    pose_sq, info_sq = pnp_only(obs)
+    pose_cl, info_cl = classifier_pnp(obs, coarse_pose)
+
+    candidates = []                      # (rmse, source, pose)
+    if pose_sq is not None:
+        candidates.append((info_sq["rmse"], "sqpnp", pose_sq))
+    if not info_cl["fallback"]:
+        candidates.append((info_cl["rmse"], "classifier", pose_cl))
+
+    if not candidates:                   # both failed: coarse pose (info_cl holds its RMSE)
+        return pose_cl, {"n_visible": info_cl["n_visible"], "rmse": info_cl["rmse"],
+                         "fallback": True, "source": "coarse"}
+    rmse, source, pose = min(candidates, key=lambda c: c[0])
+    return pose, {"n_visible": info_cl["n_visible"], "rmse": rmse,
+                  "fallback": False, "source": source}

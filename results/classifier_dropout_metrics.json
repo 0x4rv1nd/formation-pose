@@ -1,0 +1,11 @@
+{
+  "epochs_trained": 40,
+  "original": {
+    "val_top1_clean": 0.59195,
+    "val_top1_with_dropout": 0.18265
+  },
+  "dropout": {
+    "val_top1_clean": 0.5632,
+    "val_top1_with_dropout": 0.52455
+  }
+}

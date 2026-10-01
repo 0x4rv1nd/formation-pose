@@ -95,5 +95,39 @@ for i, pose in enumerate(poses):
     est[i] = pnp.classifier_pnp(obs, coarse)[0]
 check("classifier+PnP results have no NaNs (noise 5 px, 400 frames)", np.isfinite(est).all())
 
+# --- Phase 4b: hybrid and the dropout model ------------------------------------
+worst_gap, zero_noise_worst, n_h = -np.inf, 0.0, 0
+for noise in (0.0, 2.0):
+    for pose in simulator.sample_random_poses(150, rng):
+        obs = filters.make_observation(pose, noise, rng)
+        coarse = classifier.predict_pose(model, obs.features[None])[0]
+        _, info_h = pnp.hybrid_pnp(obs, coarse)
+        _, info_sq = pnp.pnp_only(obs)
+        _, info_cl = pnp.classifier_pnp(obs, coarse)
+        cands = ([info_sq["rmse"]] if not info_sq["failed"] else []) + \
+                ([info_cl["rmse"]] if not info_cl["fallback"] else [])
+        if cands:
+            worst_gap = max(worst_gap, info_h["rmse"] - min(cands))
+        if noise == 0.0 and obs.visible.sum() >= 6:
+            n_h += 1
+            est = pnp.hybrid_pnp(obs, coarse)[0]
+            zero_noise_worst = max(zero_noise_worst, *pose_errors(pose, est))
+check(f"hybrid RMSE never exceeds the better candidate (worst gap {worst_gap:.1e} px)", worst_gap <= 1e-9)
+check(f"hybrid with zero noise is exact on {n_h} poses (worst {zero_noise_worst:.1e})",
+      zero_noise_worst < 1e-3)
+
+few = filters.make_observation(pose)
+few.visible[:] = False
+est, info = pnp.hybrid_pnp(few, coarse)
+check("hybrid falls back to the coarse pose when both methods fail",
+      info["fallback"] and info["source"] == "coarse" and np.array_equal(est, coarse))
+
+import os
+import train_dropout
+check("models/classifier_dropout.pt exists", os.path.exists(train_dropout.DROPOUT_MODEL_PATH))
+dmodel = classifier.load_model(train_dropout.DROPOUT_MODEL_PATH)
+pred = classifier.predict_pose(dmodel, filters.make_observation(poses[0]).features[None])
+check("dropout model loads and predicts a finite (1, 6) pose", pred.shape == (1, 6) and np.isfinite(pred).all())
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)
