@@ -106,6 +106,8 @@ N_LABELS = int(np.prod(GRID_SHAPE))        # 4800
 PITCH_YAW_RANGE_DEG = 10.0   # pitch and yaw sampled uniformly in +/- this
 MIN_RANGE_M = 25.0           # reject poses closer than this
 KEYPOINT_NOISE_PX = 0.0      # Gaussian pixel noise std (used in later phases)
+GIMBAL_NOISE_DEG = 0.0       # gimbal pointing error std (used in later phases)
+N_FEATURES = 3 * N_KEYPOINTS + 3   # 42 keypoint features + 3 gimbal direction = 45
 SEED = 0
 DATA_DIR = "data"
 RESULTS_DIR = "results"

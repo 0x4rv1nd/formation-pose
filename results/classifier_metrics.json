@@ -1,0 +1,11 @@
+{
+  "n_val": 20000,
+  "top1_accuracy": 0.59195,
+  "top5_accuracy": 0.95515,
+  "neighbour_accuracy": 0.9991,
+  "mae_x_m": 4.591194160408872,
+  "mae_y_m": 3.1563718483055383,
+  "mae_z_m": 1.6304314574422731,
+  "mae_roll_deg": 4.816726405781631,
+  "epochs_trained": 40
+}

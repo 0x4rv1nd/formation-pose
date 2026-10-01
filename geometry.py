@@ -53,6 +53,28 @@ def camera_rotation(boresight):
     return np.vstack([x_c, y_c, z_c])
 
 
+def boresight_unit(pose, noise_deg=0.0, rng=None):
+    """
+    Unit vector from the follower to the leader, in follower body axes:
+    -[x, y, z] / norm. This is where the gimbal is pointing, which a real
+    gimbal knows. A 3D unit vector is used instead of azimuth/elevation
+    because azimuth wraps at +/-180 deg when the leader is behind (x > 0).
+
+    If noise_deg > 0 the vector is rotated by a small random rotation
+    (random axis, Gaussian angle with std noise_deg) to mimic gimbal error.
+    """
+    b = -np.asarray(pose[:3], dtype=float)
+    b = b / np.linalg.norm(b)
+    if noise_deg > 0:
+        if rng is None:
+            rng = np.random.default_rng()
+        axis = rng.normal(size=3)
+        axis /= np.linalg.norm(axis)
+        angle = np.deg2rad(rng.normal(0.0, noise_deg))
+        b = Rotation.from_rotvec(angle * axis).apply(b)
+    return b
+
+
 def pose_to_camera(pose):
     """
     Pose -> (R_cam, t_cam) with X_cam = R_cam @ P_leader + t_cam.

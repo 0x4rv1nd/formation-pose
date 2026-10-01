@@ -38,26 +38,31 @@ def label_to_pose(labels):
 # ---------------------------------------------------------------------------
 # Features
 # ---------------------------------------------------------------------------
-def make_features(uv, vis):
+def make_features(uv, vis, boresight):
     """
-    42 numbers: (u, v, visible) per keypoint, with u, v normalised to [-1, 1]
-    about the image centre. Hidden keypoints get u = v = 0, visible = 0.
+    45 numbers: (u, v, visible) per keypoint (42), then the 3-component gimbal
+    boresight unit vector in follower body axes. u, v are normalised to
+    [-1, 1] about the image centre. Hidden keypoints get u = v = 0, visible = 0.
+
+    The gimbal centres the leader in the image, so the pixels alone lose the
+    viewing direction; a real gimbal knows where it points, so we add it.
     """
     u = (uv[:, 0] - config.CX) / config.CX
     v = (uv[:, 1] - config.CY) / config.CY
     feats = np.column_stack([u, v, vis.astype(float)])
     feats[~vis, :2] = 0.0
-    return feats.ravel()
+    return np.concatenate([feats.ravel(), boresight])
 
 
-def generate(n, noise_px=0.0, seed=config.SEED):
-    """Returns X (n, 42), y (n,), poses (n, 6)."""
+def generate(n, noise_px=0.0, seed=config.SEED, gimbal_noise_deg=config.GIMBAL_NOISE_DEG):
+    """Returns X (n, 45), y (n,), poses (n, 6)."""
     rng = np.random.default_rng(seed)
     poses = simulator.sample_random_poses(n, rng)
-    X = np.empty((n, 3 * config.N_KEYPOINTS))
+    X = np.empty((n, config.N_FEATURES))
     for i, pose in enumerate(poses):
         uv, vis = geometry.observe(pose, noise_px, rng)
-        X[i] = make_features(uv, vis)
+        boresight = geometry.boresight_unit(pose, gimbal_noise_deg, rng)
+        X[i] = make_features(uv, vis, boresight)
     y = pose_to_label(poses)
     return X, y, poses
 
@@ -133,16 +138,17 @@ def main():
     parser.add_argument("--n_train", type=int, default=100000)
     parser.add_argument("--n_val", type=int, default=20000)
     parser.add_argument("--noise_px", type=float, default=config.KEYPOINT_NOISE_PX)
+    parser.add_argument("--gimbal_noise_deg", type=float, default=config.GIMBAL_NOISE_DEG)
     args = parser.parse_args()
 
     os.makedirs(config.DATA_DIR, exist_ok=True)
     splits = [("train", args.n_train, config.SEED), ("val", args.n_val, config.SEED + 1)]
     for name, n, seed in splits:
         t0 = time.time()
-        X, y, poses = generate(n, args.noise_px, seed)
+        X, y, poses = generate(n, args.noise_px, seed, args.gimbal_noise_deg)
         path = os.path.join(config.DATA_DIR, f"{name}.npz")
         np.savez_compressed(path, X=X, y=y, poses=poses)
-        n_visible = X[:, 2::3].sum(axis=1)
+        n_visible = X[:, 2:3 * config.N_KEYPOINTS:3].sum(axis=1)
         print(f"{name}: {n} samples in {time.time() - t0:.1f} s -> {path}")
         print(f"  X {X.shape}, distinct labels used: {len(np.unique(y))}/{config.N_LABELS}")
         print(f"  mean visible keypoints: {n_visible.mean():.2f}/{config.N_KEYPOINTS}")

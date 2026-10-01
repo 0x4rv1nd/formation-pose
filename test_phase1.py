@@ -50,6 +50,14 @@ cg = geometry.project_points(yawed, np.zeros((1, 3)))[0]
 check("yawed pose: leader CG projects to (640, 480)",
       np.allclose(cg, [640, 480], atol=1e-9), f"got {cg}")
 
+# --- Gimbal boresight --------------------------------------------------------
+b = geometry.boresight_unit([-60, 0, 0, 0, 0, 0])
+check("boresight for [-60,0,0,0,0,0] is [1,0,0]", np.allclose(b, [1, 0, 0]), f"got {b}")
+b = geometry.boresight_unit([-60, 0, 0, 0, 0, 30])
+check("boresight for yaw = 30 is still [1,0,0]", np.allclose(b, [1, 0, 0]), f"got {b}")
+b = geometry.boresight_unit([30, 40, -10, 0, 0, 0], 2.0, np.random.default_rng(0))
+check("noisy boresight is a unit vector", np.isclose(np.linalg.norm(b), 1.0))
+
 # --- Follower above and behind -----------------------------------------------
 above = [-40, 0, -20, 0, 0, 0]
 _, vis = geometry.observe(above)
@@ -82,7 +90,9 @@ check("label_to_pose(pose_to_label(p)) is the nearest grid point",
 
 # --- Dataset ----------------------------------------------------------------
 X, y, poses = dataset.generate(200, 0.0, seed=123)
-check("dataset X has shape (n, 42)", X.shape == (200, 42), f"{X.shape}")
+check("dataset X has shape (n, 45)", X.shape == (200, 45), f"{X.shape}")
+check("last 3 features are unit boresight = -pos/|pos|",
+      np.allclose(X[:, 42:], -poses[:, :3] / np.linalg.norm(poses[:, :3], axis=1, keepdims=True)))
 check("labels in [0, 4800)", y.min() >= 0 and y.max() < config.N_LABELS)
 check("all sampled ranges >= 25 m",
       np.linalg.norm(poses[:, :3], axis=1).min() >= config.MIN_RANGE_M)
