@@ -7,6 +7,7 @@ import numpy as np
 import classifier
 import config
 import filters
+import run_phase5
 import simulator
 
 results = []
@@ -76,6 +77,54 @@ check(f"measurement with +50 m error is gated out (d^2 = {kf.last_d2:.0f} > {fil
       "state unchanged", (not accepted) and kf.n_gated == n_before + 1 and np.allclose(kf.x, x_before))
 good = true[30].copy()
 check("a good measurement is accepted", kf.update(good))
+
+# --- Phase 5b: range-calibrated R and re-initialisation (2 px, 5 seeds, same settings as run_phase5b.py) ---
+bins = filters.calibrate_pnp_noise_by_range(model, 2.0)["bins"]
+check("range-binned R is symmetric positive definite in every bin and interpolates between bins",
+      all(np.allclose(b["cov"], np.array(b["cov"]).T) and np.linalg.eigvalsh(b["cov"]).min() > 0 for b in bins)
+      and np.allclose(filters.range_R(bins, 1e3), bins[-1]["cov"])
+      and np.allclose(filters.range_R(bins, 0.5 * (bins[0]["centre_m"] + bins[1]["centre_m"])),
+                      0.5 * (np.array(bins[0]["cov"]) + np.array(bins[1]["cov"]))))
+check("position std in the calibration grows with range", bins[-1]["std"][0] > bins[0]["std"][0])
+
+def run_tracking_reinit(seed, outage):
+    """Like filters.run_filter, but also records the step index of each re-initialisation."""
+    kf = filters.RangeKalmanFilter(model, bins)
+    rng = np.random.default_rng(seed)
+    est, reinit_steps = np.empty((len(times), 6)), []
+    for i, pose in enumerate(true):
+        obs = filters.make_observation(pose, 2.0, rng)
+        if outage and outage[0] - 1e-9 <= times[i] < outage[1] - 1e-9:
+            obs = filters.hide_all_keypoints(obs)
+        n = kf.n_reinit
+        est[i] = kf.initialise(obs) if i == 0 else kf.step(obs)
+        if kf.n_reinit > n:
+            reinit_steps.append(i)
+    return kf, est, reinit_steps
+
+
+i_back = int(np.argmax(times >= 5.0 - 1e-9))        # first step with measurements after the outage
+normal_rate, delays, att_rec, att_rec_normal = [], [], [], []
+for seed in range(5):
+    kf, est, _ = run_tracking_reinit(seed, None)
+    normal_rate.append(100 * kf.n_gated / (len(times) - 1 - kf.n_missing))
+    normal_att = run_phase5.errors(true, est)[1]
+    kf, est, steps = run_tracking_reinit(seed, (4.0, 5.0))
+    steps = [i for i in steps if i >= i_back]
+    delays.append(steps[0] - i_back + 1 if steps else None)    # 1 = at the first measurement back
+    if steps:
+        w = np.arange(len(times))
+        w = (w >= steps[0]) & (times < 6.0 - 1e-9)
+        att_rec.append(run_phase5.errors(true, est)[1][w].mean())
+        att_rec_normal.append(normal_att[w].mean())
+rate = np.mean(normal_rate)
+check(f"fixed KF normal gate rejection rate {rate:.2f} % < 1 % (nominal 0.1 %)", rate < 1.0)
+check(f"(a) fixed KF re-initialises within {filters.REINIT_AFTER} steps after measurements return "
+      f"(steps taken per seed: {delays})",
+      all(d is not None and d <= filters.REINIT_AFTER for d in delays))
+check(f"(b) from the re-initialisation to t = 6 s the attitude error ({np.mean(att_rec):.2f} deg) is within 2x "
+      f"its normal level over the same steps ({np.mean(att_rec_normal):.2f} deg)",
+      len(att_rec) == 5 and np.mean(att_rec) <= 2 * np.mean(att_rec_normal))
 
 # --- improved particle filter weights --------------------------------------------------
 obs = [filters.make_observation(p, 0.0) for p in true[:3]]

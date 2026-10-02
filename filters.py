@@ -237,6 +237,65 @@ def calibrate_pnp_noise(model, noise_px, n=CALIB_N, seed=CALIB_SEED):
             "cov": cov.tolist()}
 
 
+# Phase 5b (fixed in advance, not tuned)
+RANGE_BIN_EDGES = [25.0, 50.0, 75.0, 100.0, np.inf]   # m; poses never get beyond ~113 m, so no 150+ bin
+RANGE_CALIB_N = 2000         # more poses than REF-range calibration so that every bin has enough samples
+RANGE_BIN_MIN_N = 30
+REINIT_AFTER = 3             # consecutive gated measurements before the attitude is re-initialised
+
+
+def calibrate_pnp_noise_by_range(model, noise_px, n=RANGE_CALIB_N, seed=CALIB_SEED):
+    """
+    PnP error covariance per range bin, measured on random poses (calibration set only).
+    Same exclusions and floor as calibrate_pnp_noise, but the position errors are NOT rescaled:
+    each bin holds the raw 6x6 covariance of its own poses. The bin centre is the mean range of
+    the samples in the bin (used for interpolation).
+    """
+    rng = np.random.default_rng(seed)
+    poses = simulator.sample_random_poses(n, rng)
+    ranges, errs, n_missing, n_gross = [], [], 0, 0
+    for pose in poses:
+        obs = make_observation(pose, noise_px, rng)
+        z = pnp_measurement(model, obs)
+        if z is None:
+            n_missing += 1
+            continue
+        e = pose_error_vector(z, pose)
+        if np.linalg.norm(e[:3]) > 10.0 or np.linalg.norm(e[3:]) > 20.0:
+            n_gross += 1
+            continue
+        ranges.append(np.linalg.norm(pose[:3]))
+        errs.append(e)
+    ranges, errs = np.array(ranges), np.array(errs)
+    floor = np.diag([R_FLOOR_POS_M ** 2] * 3 + [R_FLOOR_ATT_DEG ** 2] * 3)
+    bins = []
+    for lo, hi in zip(RANGE_BIN_EDGES[:-1], RANGE_BIN_EDGES[1:]):
+        m = (ranges >= lo) & (ranges < hi)
+        if m.sum() < RANGE_BIN_MIN_N:
+            raise RuntimeError(f"range bin {lo}-{hi} m has only {m.sum()} samples at {noise_px} px")
+        cov = errs[m].T @ errs[m] / m.sum() + floor
+        bins.append({"range_lo_m": lo, "range_hi_m": None if np.isinf(hi) else hi,
+                     "n": int(m.sum()), "centre_m": float(ranges[m].mean()),
+                     "std": np.sqrt(np.diag(cov)).tolist(), "cov": cov.tolist()})
+    return {"noise_px": noise_px, "n_poses": n, "n_no_solution": n_missing,
+            "n_gross_failures": n_gross, "n_used": len(errs),
+            "std_labels": ["x_m", "y_m", "z_m", "roll_deg", "pitch_deg", "yaw_deg"], "bins": bins}
+
+
+def range_R(bins, r):
+    """Covariance at range r: linear interpolation between the bin covariances at the bin
+    centres (a convex combination of positive definite matrices), clamped at the ends."""
+    centres = np.array([b["centre_m"] for b in bins])
+    covs = np.array([b["cov"] for b in bins])
+    if r <= centres[0]:
+        return covs[0]
+    if r >= centres[-1]:
+        return covs[-1]
+    j = np.searchsorted(centres, r) - 1
+    w = (r - centres[j]) / (centres[j + 1] - centres[j])
+    return (1 - w) * covs[j] + w * covs[j + 1]
+
+
 # ---------------------------------------------------------------------------
 # Single-frame PnP as a "filter" (so run_filter can run it)
 # ---------------------------------------------------------------------------
@@ -307,6 +366,10 @@ class KalmanFilter:
         self.last_d2 = np.nan    # squared Mahalanobis distance of the last innovation
 
     # -- helpers ------------------------------------------------------------
+    def _R(self, z_pos, est_pos):
+        """Measurement covariance for a measurement at z_pos (est_pos: current estimated position)."""
+        return scaled_R(self.R_ref, z_pos)
+
     def _pose(self):
         return self.x[[0, 1, 2, 6, 7, 8]].copy()
 
@@ -316,7 +379,7 @@ class KalmanFilter:
         self.x = np.zeros(12)
         self.x[pose_idx] = z
         self.P = np.zeros((12, 12))
-        self.P[np.ix_(pose_idx, pose_idx)] = scaled_R(self.R_ref, z[:3])
+        self.P[np.ix_(pose_idx, pose_idx)] = self._R(z[:3], z[:3])
         self.P[3:6, 3:6] = config.V_INIT_MAX ** 2 * np.eye(3)    # +/- 5 m/s, as the particle filter
         self.P[9:12, 9:12] = config.W_MAX ** 2 * np.eye(3)       # +/- 20 deg/s
 
@@ -337,7 +400,7 @@ class KalmanFilter:
 
     def update(self, z):
         """Measurement update with the pose z (6,). Returns True if used, False if gated out."""
-        R = scaled_R(self.R_ref, z[:3])
+        R = self._R(z[:3], self.x[:3])
         nu = pose_error_vector(z, self.H @ self.x)           # innovation, angles wrapped
         S = self.H @ self.P @ self.H.T + R
         self.last_d2 = float(nu @ np.linalg.solve(S, nu))
@@ -366,6 +429,56 @@ class KalmanFilter:
         else:
             self.update(z)
         return self._pose()
+
+
+class RangeKalmanFilter(KalmanFilter):
+    """
+    Phase 5b Kalman filter: the Phase 5 filter with two changes and nothing else.
+      1. R comes from the range-binned calibration (calibrate_pnp_noise_by_range), interpolated
+         at the estimated range (the filter's predicted position at update time) instead of the
+         Phase 5 rule "one covariance, position variances scaled with range^2".
+      2. After REINIT_AFTER consecutive gated measurements the attitude and the attitude rates are
+         re-initialised from the current PnP measurement (attitude = measurement, rates 0,
+         rate std W_MAX, attitude covariance = R). Position and velocity keep their estimates.
+         Steps without a measurement do not change the count. n_reinit counts the events.
+    """
+
+    def __init__(self, model, range_bins, reinit_after=REINIT_AFTER):
+        mid = np.array(range_bins[len(range_bins) // 2]["cov"])
+        super().__init__(model, mid)
+        self.range_bins = range_bins
+        self.reinit_after = reinit_after
+        self.n_reinit = 0
+        self.consec_gated = 0
+
+    def _R(self, z_pos, est_pos):
+        return range_R(self.range_bins, np.linalg.norm(est_pos))
+
+    def initialise(self, obs):
+        self.n_reinit = 0
+        self.consec_gated = 0
+        return super().initialise(obs)
+
+    def update(self, z):
+        used = super().update(z)
+        if used:
+            self.consec_gated = 0
+        else:
+            self.consec_gated += 1
+            if self.consec_gated >= self.reinit_after:
+                self._reinit_attitude(z)
+                self.n_reinit += 1
+                self.consec_gated = 0
+        return used
+
+    def _reinit_attitude(self, z):
+        R = self._R(z[:3], self.x[:3])
+        self.x[6:9] = z[3:]
+        self.x[9:12] = 0.0
+        self.P[6:12, :] = 0.0
+        self.P[:, 6:12] = 0.0
+        self.P[6:9, 6:9] = R[3:, 3:]
+        self.P[9:12, 9:12] = config.W_MAX ** 2 * np.eye(3)
 
 
 # ---------------------------------------------------------------------------
