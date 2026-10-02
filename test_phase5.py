@@ -5,7 +5,6 @@ import sys
 import numpy as np
 
 import classifier
-import config
 import filters
 import run_phase5
 import simulator

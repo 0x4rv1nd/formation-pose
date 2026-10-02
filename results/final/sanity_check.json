@@ -1,0 +1,2974 @@
+{
+ "n_compared": 424,
+ "n_mismatch": 0,
+ "rows": [
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Classifier only, pos_mean",
+   "new": 7.048443171525922,
+   "stored": 7.048443171525922,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Classifier only, pos_median",
+   "new": 7.518272902578209,
+   "stored": 7.518272902578209,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Classifier only, att_mean",
+   "new": 5.0293264934276625,
+   "stored": 5.0293264934276625,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Classifier only, att_median",
+   "new": 4.960556033929026,
+   "stored": 4.960556033929026,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, PnP only (SQPnP), pos_mean",
+   "new": 3.0507942410403962e-12,
+   "stored": 3.0507942410403962e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, PnP only (SQPnP), pos_median",
+   "new": 2.066522268844943e-12,
+   "stored": 2.066522268844943e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, PnP only (SQPnP), att_mean",
+   "new": 5.951939793188122e-12,
+   "stored": 5.951939793188122e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, PnP only (SQPnP), att_median",
+   "new": 4.331967057318951e-12,
+   "stored": 4.331967057318951e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Classifier + PnP, pos_mean",
+   "new": 1.084916514882846e-07,
+   "stored": 1.084916514882846e-07,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Classifier + PnP, pos_median",
+   "new": 1.0183310099397127e-10,
+   "stored": 1.0183310099397127e-10,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Classifier + PnP, att_mean",
+   "new": 3.5168248084749567e-07,
+   "stored": 3.5168248084749567e-07,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Classifier + PnP, att_median",
+   "new": 2.6286429783270965e-10,
+   "stored": 2.6286429783270965e-10,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Paper's particle filter, pos_mean",
+   "new": 4.906229074548139,
+   "stored": 4.906229074548139,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Paper's particle filter, pos_median",
+   "new": 4.682402851384489,
+   "stored": 4.682402851384489,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Paper's particle filter, att_mean",
+   "new": 5.190558800776818,
+   "stored": 5.190558800776818,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "0 px, Paper's particle filter, att_median",
+   "new": 4.6441254215878605,
+   "stored": 4.6441254215878605,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Classifier only, pos_mean",
+   "new": 7.194503091615239,
+   "stored": 7.194503091615239,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Classifier only, pos_median",
+   "new": 7.637109884668108,
+   "stored": 7.637109884668108,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Classifier only, att_mean",
+   "new": 5.135276293942615,
+   "stored": 5.135276293942615,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Classifier only, att_median",
+   "new": 4.960556033929026,
+   "stored": 4.960556033929026,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, PnP only (SQPnP), pos_mean",
+   "new": 0.4359278928714822,
+   "stored": 0.4359278928714822,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, PnP only (SQPnP), pos_median",
+   "new": 0.3172546673332747,
+   "stored": 0.3172546673332747,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, PnP only (SQPnP), att_mean",
+   "new": 0.7480197363983049,
+   "stored": 0.7480197363983049,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, PnP only (SQPnP), att_median",
+   "new": 0.7231271098128794,
+   "stored": 0.7231271098128794,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Classifier + PnP, pos_mean",
+   "new": 0.43322363411933473,
+   "stored": 0.43322363411933473,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Classifier + PnP, pos_median",
+   "new": 0.3130034778988558,
+   "stored": 0.3130034778988558,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Classifier + PnP, att_mean",
+   "new": 0.7428457332884048,
+   "stored": 0.7428457332884048,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Classifier + PnP, att_median",
+   "new": 0.7206742335042617,
+   "stored": 0.7206742335042617,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Paper's particle filter, pos_mean",
+   "new": 6.765909243921669,
+   "stored": 6.765909243921669,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Paper's particle filter, pos_median",
+   "new": 6.46898213797828,
+   "stored": 6.46898213797828,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Paper's particle filter, att_mean",
+   "new": 5.8978441779272766,
+   "stored": 5.8978441779272766,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "1 px, Paper's particle filter, att_median",
+   "new": 5.175107612743533,
+   "stored": 5.175107612743533,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Classifier only, pos_mean",
+   "new": 7.263312315896213,
+   "stored": 7.263312315896213,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Classifier only, pos_median",
+   "new": 7.487583843980926,
+   "stored": 7.487583843980926,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Classifier only, att_mean",
+   "new": 5.239313076976118,
+   "stored": 5.239313076976118,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Classifier only, att_median",
+   "new": 4.9814470937384625,
+   "stored": 4.9814470937384625,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, PnP only (SQPnP), pos_mean",
+   "new": 0.89293335167542,
+   "stored": 0.89293335167542,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, PnP only (SQPnP), pos_median",
+   "new": 0.6376202291220989,
+   "stored": 0.6376202291220989,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, PnP only (SQPnP), att_mean",
+   "new": 1.4964995552950275,
+   "stored": 1.4964995552950275,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, PnP only (SQPnP), att_median",
+   "new": 1.4540730507829394,
+   "stored": 1.4540730507829394,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Classifier + PnP, pos_mean",
+   "new": 0.8671181963118565,
+   "stored": 0.8671181963118565,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Classifier + PnP, pos_median",
+   "new": 0.6311499932117114,
+   "stored": 0.6311499932117114,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Classifier + PnP, att_mean",
+   "new": 1.4857956713827962,
+   "stored": 1.4857956713827962,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Classifier + PnP, att_median",
+   "new": 1.4391416548321,
+   "stored": 1.4391416548321,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Paper's particle filter, pos_mean",
+   "new": 6.345701123383414,
+   "stored": 6.345701123383414,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Paper's particle filter, pos_median",
+   "new": 6.067402776945212,
+   "stored": 6.067402776945212,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Paper's particle filter, att_mean",
+   "new": 6.196503244967973,
+   "stored": 6.196503244967973,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "2 px, Paper's particle filter, att_median",
+   "new": 5.63703149499148,
+   "stored": 5.63703149499148,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Classifier only, pos_mean",
+   "new": 8.081750781751339,
+   "stored": 8.081750781751339,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Classifier only, pos_median",
+   "new": 7.855145685403545,
+   "stored": 7.855145685403545,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Classifier only, att_mean",
+   "new": 5.772562148317459,
+   "stored": 5.772562148317459,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Classifier only, att_median",
+   "new": 5.187491144189755,
+   "stored": 5.187491144189755,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, PnP only (SQPnP), pos_mean",
+   "new": 2.761195733058763,
+   "stored": 2.761195733058763,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, PnP only (SQPnP), pos_median",
+   "new": 1.9426917140863196,
+   "stored": 1.9426917140863196,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, PnP only (SQPnP), att_mean",
+   "new": 4.352940981917536,
+   "stored": 4.352940981917536,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, PnP only (SQPnP), att_median",
+   "new": 3.6622501544513613,
+   "stored": 3.6622501544513613,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Classifier + PnP, pos_mean",
+   "new": 2.1721041660234164,
+   "stored": 2.1721041660234164,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Classifier + PnP, pos_median",
+   "new": 1.6033159940791442,
+   "stored": 1.6033159940791442,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Classifier + PnP, att_mean",
+   "new": 3.7164366553337893,
+   "stored": 3.7164366553337893,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Classifier + PnP, att_median",
+   "new": 3.5555326106878846,
+   "stored": 3.5555326106878846,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Paper's particle filter, pos_mean",
+   "new": 7.912906029092642,
+   "stored": 7.912906029092642,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Paper's particle filter, pos_median",
+   "new": 7.701134268223233,
+   "stored": 7.701134268223233,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Paper's particle filter, att_mean",
+   "new": 7.451840688895193,
+   "stored": 7.451840688895193,
+   "ok": true
+  },
+  {
+   "source": "Phase 4",
+   "quantity": "5 px, Paper's particle filter, att_median",
+   "new": 7.123257679010964,
+   "stored": 7.123257679010964,
+   "ok": true
+  },
+  {
+   "source": "Phase 3",
+   "quantity": "0 px, Config B, pos_mean",
+   "new": 4.906229074548139,
+   "stored": 4.906229074548139,
+   "ok": true
+  },
+  {
+   "source": "Phase 3",
+   "quantity": "0 px, Config B, att_mean",
+   "new": 5.190558800776818,
+   "stored": 5.190558800776818,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Paper's particle filter, pos_mean",
+   "new": 4.906229074548139,
+   "stored": 4.906229074548139,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Paper's particle filter, pos_median",
+   "new": 4.682402851384489,
+   "stored": 4.682402851384489,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Paper's particle filter, att_mean",
+   "new": 5.190558800776818,
+   "stored": 5.190558800776818,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Paper's particle filter, att_median",
+   "new": 4.6441254215878605,
+   "stored": 4.6441254215878605,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Paper's particle filter, pos_mean_outage",
+   "new": 9.423474448970902,
+   "stored": 9.423474448970902,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Paper's particle filter, att_mean_outage",
+   "new": 10.499404946353033,
+   "stored": 10.499404946353033,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Paper's particle filter, pos_mean_after",
+   "new": 6.535651431125868,
+   "stored": 6.535651431125868,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Paper's particle filter, att_mean_after",
+   "new": 9.023652775420057,
+   "stored": 9.023652775420057,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Hybrid PnP, pos_mean",
+   "new": 2.870363652090791e-12,
+   "stored": 2.870363652090791e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Hybrid PnP, pos_median",
+   "new": 1.7229058883920925e-12,
+   "stored": 1.7229058883920925e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Hybrid PnP, att_mean",
+   "new": 5.591788090512694e-12,
+   "stored": 5.591788090512694e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Hybrid PnP, att_median",
+   "new": 3.6048025831668697e-12,
+   "stored": 3.6048025831668697e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Hybrid PnP, pos_mean_outage",
+   "new": NaN,
+   "stored": NaN,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Hybrid PnP, att_mean_outage",
+   "new": NaN,
+   "stored": NaN,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Hybrid PnP, pos_mean_after",
+   "new": 2.0035656912618147e-12,
+   "stored": 2.0035656912618147e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Hybrid PnP, att_mean_after",
+   "new": 4.090251167903668e-12,
+   "stored": 4.090251167903668e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Improved particle filter, pos_mean",
+   "new": 0.5776803049377272,
+   "stored": 0.5776803049377272,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Improved particle filter, pos_median",
+   "new": 0.5788032837486187,
+   "stored": 0.5788032837486187,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Improved particle filter, att_mean",
+   "new": 0.49734624363660435,
+   "stored": 0.49734624363660435,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Improved particle filter, att_median",
+   "new": 0.4588495006701844,
+   "stored": 0.4588495006701844,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Improved particle filter, pos_mean_outage",
+   "new": 2.6956623632004457,
+   "stored": 2.6956623632004457,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Improved particle filter, att_mean_outage",
+   "new": 5.974124388911439,
+   "stored": 5.974124388911439,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Improved particle filter, pos_mean_after",
+   "new": 0.945577977708424,
+   "stored": 0.945577977708424,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Improved particle filter, att_mean_after",
+   "new": 1.2475315323131135,
+   "stored": 1.2475315323131135,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), pos_mean",
+   "new": 7.029671433776847e-06,
+   "stored": 7.029671433776847e-06,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), pos_median",
+   "new": 2.227684628563663e-12,
+   "stored": 2.227684628563663e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), att_mean",
+   "new": 0.001732396172633518,
+   "stored": 0.001732396172633518,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), att_median",
+   "new": 0.0019309378607210554,
+   "stored": 0.0019309378607210554,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), gated",
+   "new": 0.0,
+   "stored": 0.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Kalman filter (Phase 5), pos_mean_outage",
+   "new": 2.2951005356096928e-11,
+   "stored": 2.2951005356096928e-11,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Kalman filter (Phase 5), att_mean_outage",
+   "new": 4.103399873883527,
+   "stored": 4.103399873883527,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Kalman filter (Phase 5), pos_mean_after",
+   "new": 1.786301516944486e-12,
+   "stored": 1.786301516944486e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 0 px, Kalman filter (Phase 5), att_mean_after",
+   "new": 0.001251327962731683,
+   "stored": 0.001251327962731683,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Paper's particle filter, pos_mean",
+   "new": 6.765909243921669,
+   "stored": 6.765909243921669,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Paper's particle filter, pos_median",
+   "new": 6.46898213797828,
+   "stored": 6.46898213797828,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Paper's particle filter, att_mean",
+   "new": 5.8978441779272766,
+   "stored": 5.8978441779272766,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Paper's particle filter, att_median",
+   "new": 5.175107612743533,
+   "stored": 5.175107612743533,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Paper's particle filter, pos_mean_outage",
+   "new": 9.088791597893215,
+   "stored": 9.088791597893215,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Paper's particle filter, att_mean_outage",
+   "new": 10.448482175161192,
+   "stored": 10.448482175161192,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Paper's particle filter, pos_mean_after",
+   "new": 7.64101576706998,
+   "stored": 7.64101576706998,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Paper's particle filter, att_mean_after",
+   "new": 8.41950388078089,
+   "stored": 8.41950388078089,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Hybrid PnP, pos_mean",
+   "new": 0.43322363411933473,
+   "stored": 0.43322363411933473,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Hybrid PnP, pos_median",
+   "new": 0.3130034778988558,
+   "stored": 0.3130034778988558,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Hybrid PnP, att_mean",
+   "new": 0.7428457332884048,
+   "stored": 0.7428457332884048,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Hybrid PnP, att_median",
+   "new": 0.7206742335042617,
+   "stored": 0.7206742335042617,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Hybrid PnP, pos_mean_outage",
+   "new": NaN,
+   "stored": NaN,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Hybrid PnP, att_mean_outage",
+   "new": NaN,
+   "stored": NaN,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Hybrid PnP, pos_mean_after",
+   "new": 0.4183065987696205,
+   "stored": 0.4183065987696205,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Hybrid PnP, att_mean_after",
+   "new": 0.7241039332951332,
+   "stored": 0.7241039332951332,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Improved particle filter, pos_mean",
+   "new": 0.7546430727622415,
+   "stored": 0.7546430727622415,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Improved particle filter, pos_median",
+   "new": 0.6991163925819392,
+   "stored": 0.6991163925819392,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Improved particle filter, att_mean",
+   "new": 1.0958857028673619,
+   "stored": 1.0958857028673619,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Improved particle filter, att_median",
+   "new": 1.064917456717681,
+   "stored": 1.064917456717681,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Improved particle filter, pos_mean_outage",
+   "new": 3.6840920431109,
+   "stored": 3.6840920431109,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Improved particle filter, att_mean_outage",
+   "new": 6.164035336339607,
+   "stored": 6.164035336339607,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Improved particle filter, pos_mean_after",
+   "new": 1.4148395454082625,
+   "stored": 1.4148395454082625,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Improved particle filter, att_mean_after",
+   "new": 1.9646903781273692,
+   "stored": 1.9646903781273692,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), pos_mean",
+   "new": 0.23206145864331532,
+   "stored": 0.23206145864331532,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), pos_median",
+   "new": 0.15536902510369605,
+   "stored": 0.15536902510369605,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), att_mean",
+   "new": 0.7497581742198984,
+   "stored": 0.7497581742198984,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), att_median",
+   "new": 0.703161064179601,
+   "stored": 0.703161064179601,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), gated",
+   "new": 2.2,
+   "stored": 2.2,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Kalman filter (Phase 5), pos_mean_outage",
+   "new": 0.4784825307495232,
+   "stored": 0.4784825307495232,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Kalman filter (Phase 5), att_mean_outage",
+   "new": 8.672108049881196,
+   "stored": 8.672108049881196,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Kalman filter (Phase 5), pos_mean_after",
+   "new": 0.7487315762015492,
+   "stored": 0.7487315762015492,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 1 px, Kalman filter (Phase 5), att_mean_after",
+   "new": 28.336318274379558,
+   "stored": 28.336318274379558,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Paper's particle filter, pos_mean",
+   "new": 6.345701123383414,
+   "stored": 6.345701123383414,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Paper's particle filter, pos_median",
+   "new": 6.067402776945212,
+   "stored": 6.067402776945212,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Paper's particle filter, att_mean",
+   "new": 6.196503244967973,
+   "stored": 6.196503244967973,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Paper's particle filter, att_median",
+   "new": 5.63703149499148,
+   "stored": 5.63703149499148,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Paper's particle filter, pos_mean_outage",
+   "new": 9.24469265700646,
+   "stored": 9.24469265700646,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Paper's particle filter, att_mean_outage",
+   "new": 10.456391405904405,
+   "stored": 10.456391405904405,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Paper's particle filter, pos_mean_after",
+   "new": 8.932348285448365,
+   "stored": 8.932348285448365,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Paper's particle filter, att_mean_after",
+   "new": 9.582966509509653,
+   "stored": 9.582966509509653,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Hybrid PnP, pos_mean",
+   "new": 0.8671181963118565,
+   "stored": 0.8671181963118565,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Hybrid PnP, pos_median",
+   "new": 0.6311499932117114,
+   "stored": 0.6311499932117114,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Hybrid PnP, att_mean",
+   "new": 1.4857956713827962,
+   "stored": 1.4857956713827962,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Hybrid PnP, att_median",
+   "new": 1.4391416548321,
+   "stored": 1.4391416548321,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Hybrid PnP, pos_mean_outage",
+   "new": NaN,
+   "stored": NaN,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Hybrid PnP, att_mean_outage",
+   "new": NaN,
+   "stored": NaN,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Hybrid PnP, pos_mean_after",
+   "new": 0.837268384930729,
+   "stored": 0.837268384930729,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Hybrid PnP, att_mean_after",
+   "new": 1.4510667851318986,
+   "stored": 1.4510667851318986,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Improved particle filter, pos_mean",
+   "new": 1.1793802149064025,
+   "stored": 1.1793802149064025,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Improved particle filter, pos_median",
+   "new": 1.0546441249688505,
+   "stored": 1.0546441249688505,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Improved particle filter, att_mean",
+   "new": 1.5579289511781447,
+   "stored": 1.5579289511781447,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Improved particle filter, att_median",
+   "new": 1.4671021446796628,
+   "stored": 1.4671021446796628,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Improved particle filter, pos_mean_outage",
+   "new": 3.1741103319823596,
+   "stored": 3.1741103319823596,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Improved particle filter, att_mean_outage",
+   "new": 6.367273969127992,
+   "stored": 6.367273969127992,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Improved particle filter, pos_mean_after",
+   "new": 1.5430293675994249,
+   "stored": 1.5430293675994249,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Improved particle filter, att_mean_after",
+   "new": 2.103384684494231,
+   "stored": 2.103384684494231,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), pos_mean",
+   "new": 0.43348836542760427,
+   "stored": 0.43348836542760427,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), pos_median",
+   "new": 0.2973144224249188,
+   "stored": 0.2973144224249188,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), att_mean",
+   "new": 1.504676932967102,
+   "stored": 1.504676932967102,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), att_median",
+   "new": 1.4341257708535629,
+   "stored": 1.4341257708535629,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), gated",
+   "new": 2.4,
+   "stored": 2.4,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Kalman filter (Phase 5), pos_mean_outage",
+   "new": 0.817506160095582,
+   "stored": 0.817506160095582,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Kalman filter (Phase 5), att_mean_outage",
+   "new": 11.505040696930985,
+   "stored": 11.505040696930985,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Kalman filter (Phase 5), pos_mean_after",
+   "new": 1.2439434266135716,
+   "stored": 1.2439434266135716,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 2 px, Kalman filter (Phase 5), att_mean_after",
+   "new": 35.08341226136811,
+   "stored": 35.08341226136811,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Paper's particle filter, pos_mean",
+   "new": 7.912906029092642,
+   "stored": 7.912906029092642,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Paper's particle filter, pos_median",
+   "new": 7.701134268223233,
+   "stored": 7.701134268223233,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Paper's particle filter, att_mean",
+   "new": 7.451840688895193,
+   "stored": 7.451840688895193,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Paper's particle filter, att_median",
+   "new": 7.123257679010964,
+   "stored": 7.123257679010964,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Paper's particle filter, pos_mean_outage",
+   "new": 9.33252208635873,
+   "stored": 9.33252208635873,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Paper's particle filter, att_mean_outage",
+   "new": 12.166117853858669,
+   "stored": 12.166117853858669,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Paper's particle filter, pos_mean_after",
+   "new": 10.295471693235374,
+   "stored": 10.295471693235374,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Paper's particle filter, att_mean_after",
+   "new": 10.556970678979239,
+   "stored": 10.556970678979239,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Hybrid PnP, pos_mean",
+   "new": 2.1721041660234164,
+   "stored": 2.1721041660234164,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Hybrid PnP, pos_median",
+   "new": 1.6033159940791442,
+   "stored": 1.6033159940791442,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Hybrid PnP, att_mean",
+   "new": 3.7164366553337893,
+   "stored": 3.7164366553337893,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Hybrid PnP, att_median",
+   "new": 3.5555326106878846,
+   "stored": 3.5555326106878846,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Hybrid PnP, pos_mean_outage",
+   "new": NaN,
+   "stored": NaN,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Hybrid PnP, att_mean_outage",
+   "new": NaN,
+   "stored": NaN,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Hybrid PnP, pos_mean_after",
+   "new": 2.0960045488082986,
+   "stored": 2.0960045488082986,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Hybrid PnP, att_mean_after",
+   "new": 3.651414328442354,
+   "stored": 3.651414328442354,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Improved particle filter, pos_mean",
+   "new": 2.13460154401225,
+   "stored": 2.13460154401225,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Improved particle filter, pos_median",
+   "new": 1.7632303539949006,
+   "stored": 1.7632303539949006,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Improved particle filter, att_mean",
+   "new": 3.079643652730861,
+   "stored": 3.079643652730861,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Improved particle filter, att_median",
+   "new": 2.8798746801749533,
+   "stored": 2.8798746801749533,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Improved particle filter, pos_mean_outage",
+   "new": 2.9465876454095716,
+   "stored": 2.9465876454095716,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Improved particle filter, att_mean_outage",
+   "new": 6.566104624609325,
+   "stored": 6.566104624609325,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Improved particle filter, pos_mean_after",
+   "new": 3.0740778035509044,
+   "stored": 3.0740778035509044,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Improved particle filter, att_mean_after",
+   "new": 3.748238354705863,
+   "stored": 3.748238354705863,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), pos_mean",
+   "new": 1.0744292395118973,
+   "stored": 1.0744292395118973,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), pos_median",
+   "new": 0.817877124078365,
+   "stored": 0.817877124078365,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), att_mean",
+   "new": 3.665835581004894,
+   "stored": 3.665835581004894,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), att_median",
+   "new": 3.7043936224417564,
+   "stored": 3.7043936224417564,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), gated",
+   "new": 3.2,
+   "stored": 3.2,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Kalman filter (Phase 5), pos_mean_outage",
+   "new": 2.200832601646296,
+   "stored": 2.200832601646296,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Kalman filter (Phase 5), att_mean_outage",
+   "new": 16.240128560782008,
+   "stored": 16.240128560782008,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Kalman filter (Phase 5), pos_mean_after",
+   "new": 3.026233880596752,
+   "stored": 3.026233880596752,
+   "ok": true
+  },
+  {
+   "source": "Phase 5",
+   "quantity": "B, 5 px, Kalman filter (Phase 5), att_mean_after",
+   "new": 45.59073612269735,
+   "stored": 45.59073612269735,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), pos_mean",
+   "new": 7.029671433776847e-06,
+   "stored": 7.029671433776847e-06,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), pos_median",
+   "new": 2.227684628563663e-12,
+   "stored": 2.227684628563663e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), att_mean",
+   "new": 0.001732396172633518,
+   "stored": 0.001732396172633518,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), att_median",
+   "new": 0.0019309378607210554,
+   "stored": 0.0019309378607210554,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Kalman filter (Phase 5), gated",
+   "new": 0.0,
+   "stored": 0.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Kalman filter (Phase 5), pos_mean_outage",
+   "new": 2.2951005356096928e-11,
+   "stored": 2.2951005356096928e-11,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Kalman filter (Phase 5), att_mean_outage",
+   "new": 4.103399873883527,
+   "stored": 4.103399873883527,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Kalman filter (Phase 5), pos_mean_after",
+   "new": 1.786301516944486e-12,
+   "stored": 1.786301516944486e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Kalman filter (Phase 5), att_mean_after",
+   "new": 0.001251327962731683,
+   "stored": 0.001251327962731683,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Range-calibrated Kalman filter, pos_mean",
+   "new": 3.152956738697874e-06,
+   "stored": 3.152956738697874e-06,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Range-calibrated Kalman filter, pos_median",
+   "new": 2.0944723615189995e-12,
+   "stored": 2.0944723615189995e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Range-calibrated Kalman filter, att_mean",
+   "new": 0.0017323961726344282,
+   "stored": 0.0017323961726344282,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Range-calibrated Kalman filter, att_median",
+   "new": 0.0019309378607304788,
+   "stored": 0.0019309378607304788,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 0 px, Range-calibrated Kalman filter, gated",
+   "new": 0.0,
+   "stored": 0.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Range-calibrated Kalman filter, pos_mean_outage",
+   "new": 2.861307996513722e-11,
+   "stored": 2.861307996513722e-11,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Range-calibrated Kalman filter, att_mean_outage",
+   "new": 4.103399873883534,
+   "stored": 4.103399873883534,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Range-calibrated Kalman filter, pos_mean_after",
+   "new": 1.8035956751671955e-12,
+   "stored": 1.8035956751671955e-12,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Range-calibrated Kalman filter, att_mean_after",
+   "new": 0.0012513279627342504,
+   "stored": 0.0012513279627342504,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 0 px, Range-calibrated Kalman filter, reinit",
+   "new": 0.0,
+   "stored": 0.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), pos_mean",
+   "new": 0.23206145864331532,
+   "stored": 0.23206145864331532,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), pos_median",
+   "new": 0.15536902510369605,
+   "stored": 0.15536902510369605,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), att_mean",
+   "new": 0.7497581742198984,
+   "stored": 0.7497581742198984,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), att_median",
+   "new": 0.703161064179601,
+   "stored": 0.703161064179601,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Kalman filter (Phase 5), gated",
+   "new": 2.2,
+   "stored": 2.2,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Kalman filter (Phase 5), pos_mean_outage",
+   "new": 0.4784825307495232,
+   "stored": 0.4784825307495232,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Kalman filter (Phase 5), att_mean_outage",
+   "new": 8.672108049881196,
+   "stored": 8.672108049881196,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Kalman filter (Phase 5), pos_mean_after",
+   "new": 0.7487315762015492,
+   "stored": 0.7487315762015492,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Kalman filter (Phase 5), att_mean_after",
+   "new": 28.336318274379558,
+   "stored": 28.336318274379558,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Range-calibrated Kalman filter, pos_mean",
+   "new": 0.22839569845326987,
+   "stored": 0.22839569845326987,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Range-calibrated Kalman filter, pos_median",
+   "new": 0.16278854910331866,
+   "stored": 0.16278854910331866,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Range-calibrated Kalman filter, att_mean",
+   "new": 0.7608069880509689,
+   "stored": 0.7608069880509689,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Range-calibrated Kalman filter, att_median",
+   "new": 0.7240315889674761,
+   "stored": 0.7240315889674761,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 1 px, Range-calibrated Kalman filter, gated",
+   "new": 0.4,
+   "stored": 0.4,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Range-calibrated Kalman filter, pos_mean_outage",
+   "new": 0.439837388987922,
+   "stored": 0.439837388987922,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Range-calibrated Kalman filter, att_mean_outage",
+   "new": 9.134007177878786,
+   "stored": 9.134007177878786,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Range-calibrated Kalman filter, pos_mean_after",
+   "new": 0.3597567081819989,
+   "stored": 0.3597567081819989,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Range-calibrated Kalman filter, att_mean_after",
+   "new": 4.77659671005282,
+   "stored": 4.77659671005282,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 1 px, Range-calibrated Kalman filter, reinit",
+   "new": 1.0,
+   "stored": 1.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), pos_mean",
+   "new": 0.43348836542760427,
+   "stored": 0.43348836542760427,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), pos_median",
+   "new": 0.2973144224249188,
+   "stored": 0.2973144224249188,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), att_mean",
+   "new": 1.504676932967102,
+   "stored": 1.504676932967102,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), att_median",
+   "new": 1.4341257708535629,
+   "stored": 1.4341257708535629,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Kalman filter (Phase 5), gated",
+   "new": 2.4,
+   "stored": 2.4,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Kalman filter (Phase 5), pos_mean_outage",
+   "new": 0.817506160095582,
+   "stored": 0.817506160095582,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Kalman filter (Phase 5), att_mean_outage",
+   "new": 11.505040696930985,
+   "stored": 11.505040696930985,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Kalman filter (Phase 5), pos_mean_after",
+   "new": 1.2439434266135716,
+   "stored": 1.2439434266135716,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Kalman filter (Phase 5), att_mean_after",
+   "new": 35.08341226136811,
+   "stored": 35.08341226136811,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Range-calibrated Kalman filter, pos_mean",
+   "new": 0.4327936648390874,
+   "stored": 0.4327936648390874,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Range-calibrated Kalman filter, pos_median",
+   "new": 0.29930680006203025,
+   "stored": 0.29930680006203025,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Range-calibrated Kalman filter, att_mean",
+   "new": 1.5326530844614292,
+   "stored": 1.5326530844614292,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Range-calibrated Kalman filter, att_median",
+   "new": 1.5044597606421664,
+   "stored": 1.5044597606421664,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 2 px, Range-calibrated Kalman filter, gated",
+   "new": 0.4,
+   "stored": 0.4,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Range-calibrated Kalman filter, pos_mean_outage",
+   "new": 0.7325064204763432,
+   "stored": 0.7325064204763432,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Range-calibrated Kalman filter, att_mean_outage",
+   "new": 12.12657681667268,
+   "stored": 12.12657681667268,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Range-calibrated Kalman filter, pos_mean_after",
+   "new": 0.609855716197589,
+   "stored": 0.609855716197589,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Range-calibrated Kalman filter, att_mean_after",
+   "new": 6.211469224995117,
+   "stored": 6.211469224995117,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 2 px, Range-calibrated Kalman filter, reinit",
+   "new": 1.0,
+   "stored": 1.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), pos_mean",
+   "new": 1.0744292395118973,
+   "stored": 1.0744292395118973,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), pos_median",
+   "new": 0.817877124078365,
+   "stored": 0.817877124078365,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), att_mean",
+   "new": 3.665835581004894,
+   "stored": 3.665835581004894,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), att_median",
+   "new": 3.7043936224417564,
+   "stored": 3.7043936224417564,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Kalman filter (Phase 5), gated",
+   "new": 3.2,
+   "stored": 3.2,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Kalman filter (Phase 5), pos_mean_outage",
+   "new": 2.200832601646296,
+   "stored": 2.200832601646296,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Kalman filter (Phase 5), att_mean_outage",
+   "new": 16.240128560782008,
+   "stored": 16.240128560782008,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Kalman filter (Phase 5), pos_mean_after",
+   "new": 3.026233880596752,
+   "stored": 3.026233880596752,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Kalman filter (Phase 5), att_mean_after",
+   "new": 45.59073612269735,
+   "stored": 45.59073612269735,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Range-calibrated Kalman filter, pos_mean",
+   "new": 1.0275369832087597,
+   "stored": 1.0275369832087597,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Range-calibrated Kalman filter, pos_median",
+   "new": 0.7284460841477072,
+   "stored": 0.7284460841477072,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Range-calibrated Kalman filter, att_mean",
+   "new": 3.6616148873288275,
+   "stored": 3.6616148873288275,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Range-calibrated Kalman filter, att_median",
+   "new": 3.723517590715384,
+   "stored": 3.723517590715384,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "A, 5 px, Range-calibrated Kalman filter, gated",
+   "new": 0.8,
+   "stored": 0.8,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Range-calibrated Kalman filter, pos_mean_outage",
+   "new": 1.633672068556189,
+   "stored": 1.633672068556189,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Range-calibrated Kalman filter, att_mean_outage",
+   "new": 16.44400030591472,
+   "stored": 16.44400030591472,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Range-calibrated Kalman filter, pos_mean_after",
+   "new": 1.3333034212195056,
+   "stored": 1.3333034212195056,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Range-calibrated Kalman filter, att_mean_after",
+   "new": 8.89087031656356,
+   "stored": 8.89087031656356,
+   "ok": true
+  },
+  {
+   "source": "Phase 5b",
+   "quantity": "B, 5 px, Range-calibrated Kalman filter, reinit",
+   "new": 1.0,
+   "stored": 1.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, PnP only, pos_mean",
+   "new": 1.4460574082921218,
+   "stored": 1.4460574082921218,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, PnP only, pos_median",
+   "new": 0.7309216354581383,
+   "stored": 0.7309216354581383,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, PnP only, att_mean",
+   "new": 5.442388060627607,
+   "stored": 5.442388060627607,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, PnP only, att_median",
+   "new": 2.1435458850165046,
+   "stored": 2.1435458850165046,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, PnP only, fail_rate",
+   "new": 0.027700000000000002,
+   "stored": 0.027700000000000002,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (orig clf), pos_mean",
+   "new": 5.711065770943518,
+   "stored": 5.711065770943518,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (orig clf), pos_median",
+   "new": 0.732876215158924,
+   "stored": 0.732876215158924,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (orig clf), att_mean",
+   "new": 4.459845735497244,
+   "stored": 4.459845735497244,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (orig clf), att_median",
+   "new": 2.1825084323852977,
+   "stored": 2.1825084323852977,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (orig clf), fail_rate",
+   "new": 0.05789999999999999,
+   "stored": 0.05789999999999999,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (dropout clf), pos_mean",
+   "new": 1.349362739052496,
+   "stored": 1.349362739052496,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (dropout clf), pos_median",
+   "new": 0.6983466460978125,
+   "stored": 0.6983466460978125,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (dropout clf), att_mean",
+   "new": 2.6366686051833104,
+   "stored": 2.6366686051833104,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (dropout clf), att_median",
+   "new": 2.11043019357463,
+   "stored": 2.11043019357463,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier + PnP (dropout clf), fail_rate",
+   "new": 0.0078,
+   "stored": 0.0078,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Hybrid (dropout clf), pos_mean",
+   "new": 1.3689144146885333,
+   "stored": 1.3689144146885333,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Hybrid (dropout clf), pos_median",
+   "new": 0.7037295570834423,
+   "stored": 0.7037295570834423,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Hybrid (dropout clf), att_mean",
+   "new": 3.9886696109807915,
+   "stored": 3.9886696109807915,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Hybrid (dropout clf), att_median",
+   "new": 2.116800688132069,
+   "stored": 2.116800688132069,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Hybrid (dropout clf), fail_rate",
+   "new": 0.017400000000000002,
+   "stored": 0.017400000000000002,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier only (dropout clf), pos_mean",
+   "new": 7.198906326801572,
+   "stored": 7.198906326801572,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier only (dropout clf), pos_median",
+   "new": 6.8301353447926685,
+   "stored": 6.8301353447926685,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier only (dropout clf), att_mean",
+   "new": 10.45550646221724,
+   "stored": 10.45550646221724,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier only (dropout clf), att_median",
+   "new": 10.243168458432855,
+   "stored": 10.243168458432855,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 4-6, Classifier only (dropout clf), fail_rate",
+   "new": 0.1928,
+   "stored": 0.1928,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, PnP only, pos_mean",
+   "new": 0.8870066142580981,
+   "stored": 0.8870066142580981,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, PnP only, pos_median",
+   "new": 0.47653615443693303,
+   "stored": 0.47653615443693303,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, PnP only, att_mean",
+   "new": 1.6628768146359945,
+   "stored": 1.6628768146359945,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, PnP only, att_median",
+   "new": 1.448350633756735,
+   "stored": 1.448350633756735,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, PnP only, fail_rate",
+   "new": 0.00030000000000000003,
+   "stored": 0.00030000000000000003,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (orig clf), pos_mean",
+   "new": 5.5763300959464335,
+   "stored": 5.5763300959464335,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (orig clf), pos_median",
+   "new": 0.4937790846323347,
+   "stored": 0.4937790846323347,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (orig clf), att_mean",
+   "new": 2.9428205485976213,
+   "stored": 2.9428205485976213,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (orig clf), att_median",
+   "new": 1.4701938679515016,
+   "stored": 1.4701938679515016,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (orig clf), fail_rate",
+   "new": 0.0434,
+   "stored": 0.0434,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (dropout clf), pos_mean",
+   "new": 0.8677873293303786,
+   "stored": 0.8677873293303786,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (dropout clf), pos_median",
+   "new": 0.47608683462053153,
+   "stored": 0.47608683462053153,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (dropout clf), att_mean",
+   "new": 1.6491810285144717,
+   "stored": 1.6491810285144717,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (dropout clf), att_median",
+   "new": 1.4425095315437537,
+   "stored": 1.4425095315437537,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier + PnP (dropout clf), fail_rate",
+   "new": 0.0002,
+   "stored": 0.0002,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Hybrid (dropout clf), pos_mean",
+   "new": 0.8677873293303786,
+   "stored": 0.8677873293303786,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Hybrid (dropout clf), pos_median",
+   "new": 0.47608683462053153,
+   "stored": 0.47608683462053153,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Hybrid (dropout clf), att_mean",
+   "new": 1.6491810285144717,
+   "stored": 1.6491810285144717,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Hybrid (dropout clf), att_median",
+   "new": 1.4425095315437537,
+   "stored": 1.4425095315437537,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Hybrid (dropout clf), fail_rate",
+   "new": 0.0002,
+   "stored": 0.0002,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier only (dropout clf), pos_mean",
+   "new": 6.735216086867051,
+   "stored": 6.735216086867051,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier only (dropout clf), pos_median",
+   "new": 6.484500291475274,
+   "stored": 6.484500291475274,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier only (dropout clf), att_mean",
+   "new": 9.84162442256149,
+   "stored": 9.84162442256149,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier only (dropout clf), att_median",
+   "new": 9.920991284078971,
+   "stored": 9.920991284078971,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 7-9, Classifier only (dropout clf), fail_rate",
+   "new": 0.13040000000000002,
+   "stored": 0.13040000000000002,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, PnP only, pos_mean",
+   "new": 0.7979803353893374,
+   "stored": 0.7979803353893374,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, PnP only, pos_median",
+   "new": 0.437469457227705,
+   "stored": 0.437469457227705,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, PnP only, att_mean",
+   "new": 1.3708373915831373,
+   "stored": 1.3708373915831373,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, PnP only, att_median",
+   "new": 1.2062852284379317,
+   "stored": 1.2062852284379317,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, PnP only, fail_rate",
+   "new": 0.0,
+   "stored": 0.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (orig clf), pos_mean",
+   "new": 1.3066166967430541,
+   "stored": 1.3066166967430541,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (orig clf), pos_median",
+   "new": 0.43370724875034294,
+   "stored": 0.43370724875034294,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (orig clf), att_mean",
+   "new": 1.5289922591014082,
+   "stored": 1.5289922591014082,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (orig clf), att_median",
+   "new": 1.201022445958474,
+   "stored": 1.201022445958474,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (orig clf), fail_rate",
+   "new": 0.004747033104309807,
+   "stored": 0.004747033104309807,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (dropout clf), pos_mean",
+   "new": 0.7972970371687507,
+   "stored": 0.7972970371687507,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (dropout clf), pos_median",
+   "new": 0.43237284822939903,
+   "stored": 0.43237284822939903,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (dropout clf), att_mean",
+   "new": 1.367353162703306,
+   "stored": 1.367353162703306,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (dropout clf), att_median",
+   "new": 1.1993322539400855,
+   "stored": 1.1993322539400855,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier + PnP (dropout clf), fail_rate",
+   "new": 0.00024984384759525296,
+   "stored": 0.00024984384759525296,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Hybrid (dropout clf), pos_mean",
+   "new": 0.7654077217398724,
+   "stored": 0.7654077217398724,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Hybrid (dropout clf), pos_median",
+   "new": 0.4318401832915212,
+   "stored": 0.4318401832915212,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Hybrid (dropout clf), att_mean",
+   "new": 1.3652264096111701,
+   "stored": 1.3652264096111701,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Hybrid (dropout clf), att_median",
+   "new": 1.1991602376342838,
+   "stored": 1.1991602376342838,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Hybrid (dropout clf), fail_rate",
+   "new": 0.0,
+   "stored": 0.0,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier only (dropout clf), pos_mean",
+   "new": 6.702375067025217,
+   "stored": 6.702375067025217,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier only (dropout clf), pos_median",
+   "new": 6.4722089603443065,
+   "stored": 6.4722089603443065,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier only (dropout clf), att_mean",
+   "new": 9.717466345163349,
+   "stored": 9.717466345163349,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier only (dropout clf), att_median",
+   "new": 9.852043226197507,
+   "stored": 9.852043226197507,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "2.0 px, 10+, Classifier only (dropout clf), fail_rate",
+   "new": 0.12004996876951905,
+   "stored": 0.12004996876951905,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, PnP only, pos_mean",
+   "new": 3.667765531631533,
+   "stored": 3.667765531631533,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, PnP only, pos_median",
+   "new": 1.9352808401533506,
+   "stored": 1.9352808401533506,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, PnP only, att_mean",
+   "new": 13.97582004278203,
+   "stored": 13.97582004278203,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, PnP only, att_median",
+   "new": 5.550562253053476,
+   "stored": 5.550562253053476,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, PnP only, fail_rate",
+   "new": 0.1437,
+   "stored": 0.1437,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (orig clf), pos_mean",
+   "new": 7.525863047178868,
+   "stored": 7.525863047178868,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (orig clf), pos_median",
+   "new": 1.8930804847756597,
+   "stored": 1.8930804847756597,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (orig clf), att_mean",
+   "new": 8.430005654817686,
+   "stored": 8.430005654817686,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (orig clf), att_median",
+   "new": 5.545558702933091,
+   "stored": 5.545558702933091,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (orig clf), fail_rate",
+   "new": 0.1306,
+   "stored": 0.1306,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (dropout clf), pos_mean",
+   "new": 3.3463432302960383,
+   "stored": 3.3463432302960383,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (dropout clf), pos_median",
+   "new": 1.7875405456460658,
+   "stored": 1.7875405456460658,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (dropout clf), att_mean",
+   "new": 6.802577000571018,
+   "stored": 6.802577000571018,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (dropout clf), att_median",
+   "new": 5.3631506826212005,
+   "stored": 5.3631506826212005,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier + PnP (dropout clf), fail_rate",
+   "new": 0.0874,
+   "stored": 0.0874,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Hybrid (dropout clf), pos_mean",
+   "new": 3.3912400195901666,
+   "stored": 3.3912400195901666,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Hybrid (dropout clf), pos_median",
+   "new": 1.8181777368340746,
+   "stored": 1.8181777368340746,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Hybrid (dropout clf), att_mean",
+   "new": 11.458330832322869,
+   "stored": 11.458330832322869,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Hybrid (dropout clf), att_median",
+   "new": 5.460763466404551,
+   "stored": 5.460763466404551,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Hybrid (dropout clf), fail_rate",
+   "new": 0.118,
+   "stored": 0.118,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier only (dropout clf), pos_mean",
+   "new": 7.890089167116614,
+   "stored": 7.890089167116614,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier only (dropout clf), pos_median",
+   "new": 7.177304230546158,
+   "stored": 7.177304230546158,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier only (dropout clf), att_mean",
+   "new": 11.070168650482456,
+   "stored": 11.070168650482456,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier only (dropout clf), att_median",
+   "new": 10.571455727629582,
+   "stored": 10.571455727629582,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 4-6, Classifier only (dropout clf), fail_rate",
+   "new": 0.2633,
+   "stored": 0.2633,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, PnP only, pos_mean",
+   "new": 2.496555502182024,
+   "stored": 2.496555502182024,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, PnP only, pos_median",
+   "new": 1.3034616887670034,
+   "stored": 1.3034616887670034,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, PnP only, att_mean",
+   "new": 4.873073049108256,
+   "stored": 4.873073049108256,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, PnP only, att_median",
+   "new": 3.6284039179784715,
+   "stored": 3.6284039179784715,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, PnP only, fail_rate",
+   "new": 0.041800000000000004,
+   "stored": 0.041800000000000004,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (orig clf), pos_mean",
+   "new": 6.957366456898336,
+   "stored": 6.957366456898336,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (orig clf), pos_median",
+   "new": 1.2306109721095708,
+   "stored": 1.2306109721095708,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (orig clf), att_mean",
+   "new": 5.273179507365173,
+   "stored": 5.273179507365173,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (orig clf), att_median",
+   "new": 3.6582143454198124,
+   "stored": 3.6582143454198124,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (orig clf), fail_rate",
+   "new": 0.0663,
+   "stored": 0.0663,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (dropout clf), pos_mean",
+   "new": 2.1674609201149067,
+   "stored": 2.1674609201149067,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (dropout clf), pos_median",
+   "new": 1.1782210925402228,
+   "stored": 1.1782210925402228,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (dropout clf), att_mean",
+   "new": 4.112157215460416,
+   "stored": 4.112157215460416,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (dropout clf), att_median",
+   "new": 3.5750725898108877,
+   "stored": 3.5750725898108877,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier + PnP (dropout clf), fail_rate",
+   "new": 0.023299999999999998,
+   "stored": 0.023299999999999998,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Hybrid (dropout clf), pos_mean",
+   "new": 2.1412732064872824,
+   "stored": 2.1412732064872824,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Hybrid (dropout clf), pos_median",
+   "new": 1.1784017330698422,
+   "stored": 1.1784017330698422,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Hybrid (dropout clf), att_mean",
+   "new": 4.3699565694092755,
+   "stored": 4.3699565694092755,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Hybrid (dropout clf), att_median",
+   "new": 3.5759263078515104,
+   "stored": 3.5759263078515104,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Hybrid (dropout clf), fail_rate",
+   "new": 0.0246,
+   "stored": 0.0246,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier only (dropout clf), pos_mean",
+   "new": 7.26509234857612,
+   "stored": 7.26509234857612,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier only (dropout clf), pos_median",
+   "new": 6.84811143988436,
+   "stored": 6.84811143988436,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier only (dropout clf), att_mean",
+   "new": 10.274904139579576,
+   "stored": 10.274904139579576,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier only (dropout clf), att_median",
+   "new": 10.213406387390195,
+   "stored": 10.213406387390195,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 7-9, Classifier only (dropout clf), fail_rate",
+   "new": 0.1943,
+   "stored": 0.1943,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, PnP only, pos_mean",
+   "new": 2.353721176032539,
+   "stored": 2.353721176032539,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, PnP only, pos_median",
+   "new": 1.299521638269838,
+   "stored": 1.299521638269838,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, PnP only, att_mean",
+   "new": 3.488030330736862,
+   "stored": 3.488030330736862,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, PnP only, att_median",
+   "new": 2.978441493388821,
+   "stored": 2.978441493388821,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, PnP only, fail_rate",
+   "new": 0.026608369768894448,
+   "stored": 0.026608369768894448,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (orig clf), pos_mean",
+   "new": 2.588122883181856,
+   "stored": 2.588122883181856,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (orig clf), pos_median",
+   "new": 1.1026653597164318,
+   "stored": 1.1026653597164318,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (orig clf), att_mean",
+   "new": 3.581145829051377,
+   "stored": 3.581145829051377,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (orig clf), att_median",
+   "new": 2.958752885405138,
+   "stored": 2.958752885405138,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (orig clf), fail_rate",
+   "new": 0.015990006246096193,
+   "stored": 0.015990006246096193,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (dropout clf), pos_mean",
+   "new": 1.8973632605573254,
+   "stored": 1.8973632605573254,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (dropout clf), pos_median",
+   "new": 1.0962349200467254,
+   "stored": 1.0962349200467254,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (dropout clf), att_mean",
+   "new": 3.37374158759109,
+   "stored": 3.37374158759109,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (dropout clf), att_median",
+   "new": 2.9492504007520695,
+   "stored": 2.9492504007520695,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier + PnP (dropout clf), fail_rate",
+   "new": 0.010118675827607745,
+   "stored": 0.010118675827607745,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Hybrid (dropout clf), pos_mean",
+   "new": 1.8815721831610877,
+   "stored": 1.8815721831610877,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Hybrid (dropout clf), pos_median",
+   "new": 1.0962349200467254,
+   "stored": 1.0962349200467254,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Hybrid (dropout clf), att_mean",
+   "new": 3.3727994553389755,
+   "stored": 3.3727994553389755,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Hybrid (dropout clf), att_median",
+   "new": 2.9479672790464226,
+   "stored": 2.9479672790464226,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Hybrid (dropout clf), fail_rate",
+   "new": 0.00999375390381012,
+   "stored": 0.00999375390381012,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier only (dropout clf), pos_mean",
+   "new": 7.198651398228369,
+   "stored": 7.198651398228369,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier only (dropout clf), pos_median",
+   "new": 6.812834612632509,
+   "stored": 6.812834612632509,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier only (dropout clf), att_mean",
+   "new": 10.031093298785454,
+   "stored": 10.031093298785454,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier only (dropout clf), att_median",
+   "new": 10.077147417529385,
+   "stored": 10.077147417529385,
+   "ok": true
+  },
+  {
+   "source": "Phase 4b",
+   "quantity": "5.0 px, 10+, Classifier only (dropout clf), fail_rate",
+   "new": 0.1825109306683323,
+   "stored": 0.1825109306683323,
+   "ok": true
+  }
+ ]
+}

@@ -28,7 +28,7 @@ import dataset
 import filters
 import pnp
 import simulator
-from run_phase4 import RANDOM_SEED, errors, seed_stat, summarize
+from run_phase4 import RANDOM_SEED, seed_stat, summarize
 from train_dropout import DROPOUT_MODEL_PATH
 
 NOISES = [2.0, 5.0]
@@ -77,9 +77,8 @@ def run_methods(models, observations):
     return out
 
 
-def main():
-    os.makedirs(config.RESULTS_DIR, exist_ok=True)
-    models = {"orig": classifier.load_model(), "dropout": classifier.load_model(DROPOUT_MODEL_PATH)}
+def sweep(models, verbose=True):
+    """Run the dropout sweep. Returns (summary, group_n); summary[str(noise)][group][method] -> stats."""
     true = simulator.sample_random_poses(N_RANDOM, np.random.default_rng(RANDOM_SEED))
 
     # per_seed[noise][group][method] -> list of summaries (one per seed)
@@ -100,16 +99,11 @@ def main():
                     per_seed[noise][g][m].append(summarize(true[keep], res[m]))
                 if noise == NOISES[0] and seed == 0:
                     group_n[g] = int(keep.sum())
-            print(f"  noise {noise:g} px, seed {seed} done")
+            if verbose:
+                print(f"  noise {noise:g} px, seed {seed} done")
 
-    # ---- table --------------------------------------------------------------
-    print("\nKEYPOINT DROPOUT SWEEP (2000 random poses, mean over 5 seeds; fail = no solution or "
-          f"pos > 10 m or att > 20 deg)")
     summary = {}
     for noise in NOISES:
-        print(f"\nnoise = {noise:g} px")
-        print(f"{'Visible':8s} {'Method':32s} {'pos mean':>9s} {'pos med':>8s} {'att mean':>9s} "
-              f"{'att med':>8s} {'fail %':>7s} {'fallb %':>8s} {'no-sol':>7s}")
         summary[str(noise)] = {}
         for g in TARGETS:
             summary[str(noise)][g] = {"n_poses": group_n[g]}
@@ -119,6 +113,24 @@ def main():
                        ["pos_mean", "pos_median", "att_mean", "att_median", "fail_rate", "fallback_rate"]}
                 row["n_no_solution_total"] = int(sum(x["n_no_solution"] for x in s))
                 summary[str(noise)][g][m] = row
+    return summary, group_n
+
+
+def main():
+    os.makedirs(config.RESULTS_DIR, exist_ok=True)
+    models = {"orig": classifier.load_model(), "dropout": classifier.load_model(DROPOUT_MODEL_PATH)}
+    summary, _ = sweep(models)
+
+    # ---- table --------------------------------------------------------------
+    print("\nKEYPOINT DROPOUT SWEEP (2000 random poses, mean over 5 seeds; fail = no solution or "
+          f"pos > 10 m or att > 20 deg)")
+    for noise in NOISES:
+        print(f"\nnoise = {noise:g} px")
+        print(f"{'Visible':8s} {'Method':32s} {'pos mean':>9s} {'pos med':>8s} {'att mean':>9s} "
+              f"{'att med':>8s} {'fail %':>7s} {'fallb %':>8s} {'no-sol':>7s}")
+        for g in TARGETS:
+            for m in METHODS:
+                row = summary[str(noise)][g][m]
                 print(f"{g:8s} {m:32s} {row['pos_mean'][0]:9.2f} {row['pos_median'][0]:8.2f} "
                       f"{row['att_mean'][0]:9.2f} {row['att_median'][0]:8.2f} "
                       f"{100 * row['fail_rate'][0]:7.1f} {100 * row['fallback_rate'][0]:8.1f} "

@@ -6,7 +6,6 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 import classifier
-import config
 import filters
 import geometry
 import pnp
