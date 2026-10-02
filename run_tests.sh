@@ -13,5 +13,9 @@ if [ -d data/fw_uav/val_meta ] && [ -f data/fw_uav/val.zip ]; then   # Phase 7a 
     echo "=== test_phase7a.py"
     $PY test_phase7a.py || failed=1
 fi
+if [ -f data/fw_uav/yolo_fw_uav.zip ]; then   # Phase 7b part A needs the prepared YOLO dataset
+    echo "=== test_phase7b.py"
+    $PY test_phase7b.py || failed=1
+fi
 if [ $failed -eq 0 ]; then echo "ALL TESTS PASSED"; else echo "SOME TESTS FAILED"; fi
 exit $failed

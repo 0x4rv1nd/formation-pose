@@ -1,0 +1,26 @@
+{
+  "description": "Scene-level split of the 24 FW-UAV6DPose validation scenes (never by frame). Phase 7b: YOLO-pose keypoint detector. The test scenes are never used for training, early stopping or any tuning.",
+  "train": ["000009", "000010", "000011", "000012", "000064", "000065", "000066", "000086", "000087", "000088", "000096", "000111", "000122", "000123", "000124", "000125"],
+  "val": ["000042", "000043", "000044", "000045"],
+  "test": ["000029", "000030", "000136", "000137"],
+  "background_groups": {
+    "note": "Scenes with consecutive ids share the same sky background (checked by eye on the first frame of every scene; scene 000111 looks like the 000086-000088 sky). The split keeps every group inside one split, so no background (and no neighbouring flight) is shared between train, val and test.",
+    "A": ["000009", "000010", "000011", "000012"],
+    "B": ["000029", "000030"],
+    "C": ["000042", "000043", "000044", "000045"],
+    "D": ["000064", "000065", "000066"],
+    "E": ["000086", "000087", "000088", "000111"],
+    "F": ["000096"],
+    "G": ["000122", "000123", "000124", "000125"],
+    "H": ["000136", "000137"]
+  },
+  "assignment": {"train": "A, D, E, F, G", "val": "C", "test": "B, H"},
+  "ranges_m": {
+    "train": "164-518", "val": "241-381", "test": "175-443",
+    "test_scenes": {"000030": "175-234 (near)", "000029": "280-350 (mid)", "000137": "343-357 (far)", "000136": "344-443 (far)"}
+  },
+  "notes": [
+    "Scene 000125 is not in the test split. It has a sequence cut between frames 76 and 77 (a jump of 217 m in the true translation), but every frame is consistent with its own mask (silhouette IoU 0.72-0.77 on both sides of the cut), so its labels are valid and it is used for training.",
+    "The test split reaches 443 m; the only frames beyond 450 m are in scenes 000122 and 000125 (group G), which stay in training."
+  ]
+}

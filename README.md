@@ -763,10 +763,11 @@ nose; tail trailing edge; fin top; left / right stabiliser tip; left / right win
   because the ranges are about five times larger).
 - **Range-calibrated Kalman filter** (Phase 5b) on the PnP measurements of each sequence: unchanged dynamics,
   `A_MAX`, `W_MAX`, `V_INIT_MAX`, chi-squared gate and re-initialisation after 3 gated measurements (only the PnP
-  measurement and the dt differ). **Scene `000125` is cut into two sequences** and the filter restarted, because of a
-  data defect: between frames **76 and 77** the true translation jumps by 217 m and the rotation by 131 deg. (The brief
-  asked for the cut "at frame 76"; the jump is after frame 76, so the second sequence starts at frame 77: sequences
-  0-76 and 77-99.) PnP keeps all frames.
+  measurement and the dt differ). **Scene `000125` is cut into two sequences** and the filter restarted, because the
+  scene is a **cut between two sequences** (frames 0-76 and 77-99): between frames **76 and 77** the true translation jumps by
+  217 m and the rotation by 131 deg, while every frame is consistent with its own mask (Phase 7b checked this), so the
+  frames themselves are fine and the filter must not bridge the cut. Restarting it there is still correct. (The brief asked
+  for the cut "at frame 76"; the jump is after frame 76, so the second sequence starts at frame 77.) PnP keeps all frames.
 - **Measurement noise R** is calibrated by range bin on **synthetic poses made with this UAV model, its intrinsics and
   distance range** (4000 poses per noise level, range 140-540 m, direction through a random pixel, orientation uniform
   on SO(3) with |pitch| < 80 deg because Euler angles are ill-defined near 90 deg), never on the validation poses; bins
@@ -998,3 +999,87 @@ within 0.03 deg. Full numbers: `results/phase7a_fix/synthetic_comparison.json`.
   frames, `000125`) and `000136` still has 27 % of its measurements gated and the largest rotation error of the scenes. A
   **quaternion-based filter** (a multiplicative extended Kalman filter on the rotation) is the natural fix and future work.
 - The re-initialisation threshold (3) was fixed in Phase 5b and is unchanged.
+
+## Phase 7b (in progress): YOLO-pose keypoint detector for the FW-UAV images
+
+Phase 7a used the true keypoint projections plus Gaussian noise. Phase 7b replaces them with a **learned detector** on the
+real images. **Part A (this section)** prepares the data and the training notebook; training runs on Google Colab; part B
+(evaluation of the detector's keypoints through PnP and the Kalman filter on the test scenes) comes after.
+
+| File | Purpose |
+|------|---------|
+| `fw_uav_split.json` | The scene split (train / val / test) and the reasoning behind it |
+| `phase7b_prepare.py` | Builds the YOLO-pose dataset, the zip and the label-check figures |
+| `notebooks/train_yolo_pose_colab.ipynb` | Colab notebook: Drive, GPU check, training with resume, validation metrics |
+| `test_phase7b.py` | Sanity checks (prints PASS/FAIL) |
+| `results/phase7b/label_check_*.png`, `dataset_summary.json` | Label drawings and the dataset summary |
+
+```bash
+.venv/bin/python phase7b_prepare.py     # about 1 min: data/fw_uav/yolo_fw_uav/ and yolo_fw_uav.zip (data/ is not in git)
+.venv/bin/python test_phase7b.py
+# then upload data/fw_uav/yolo_fw_uav.zip to Google Drive: MyDrive/formation-pose/ and run the notebook
+```
+
+### Scene split (by scene, never by frame)
+
+16 train / 4 val / 4 test scenes of the 24 validation scenes (2400 frames, 100 per scene).
+
+| Split | Scenes | Range |
+|---|---|---|
+| train (1600 frames) | 000009-000012, 000064-000066, 000086-000088, 000096, 000111, 000122-000125 | 164-518 m |
+| val (400 frames, early stopping) | 000042-000045 | 241-381 m |
+| test (400 frames, never used for training or tuning) | 000029, 000030, 000136, 000137 | 175-443 m |
+
+- The test scenes cover near (`000030`, 175-234 m), middle (`000029`, 280-350 m) and far (`000136`, `000137`, 343-443 m)
+  distances. Scene `000125` is not in the test split.
+- Scenes with consecutive ids share the same sky background (checked by eye on the first frame of every scene). The split
+  keeps each such **background group** inside one split, so no background or neighbouring flight is shared between train, val
+  and test. The groups were **assigned by visual inspection** of the images, not from dataset metadata.
+- The test scenes span **175-443 m**, so the detector is **not tested beyond 450 m**: the only frames beyond 450 m belong to `000122` and `000125`, which are in training, so the
+  detector is not tested at the largest ranges.
+- Scene `000125` has the sequence cut between frames 76 and 77 (a 217 m jump in the true translation). Every frame is
+  consistent with its own mask (silhouette IoU 0.72-0.77 on both sides of the cut), so its labels are valid and it is used
+  for training; the cut matters only for temporal filtering.
+
+### Labels (YOLO-pose format)
+
+- One object per frame, class 0 (`uav`). The **box** is the bounding box of the visible-object mask plus 4 px on every side,
+  normalised.
+- The **13 keypoints** of `fw_uav_config.py` are projected with the ground-truth pose, the corrected model (cm to m, 180 degrees
+  about x) and the frame's intrinsics. `v = 2` if the keypoint is inside the image and inside the mask dilated by 2 px (the same
+  visibility as Phase 7a, which ignores self-occlusion), otherwise `v = 0` with x = y = 0. On average 12.97 of 13 keypoints are
+  visible in the training labels.
+- `kpt_shape: [13, 3]` and `flip_idx: [0, 1, 2, 4, 3, 9, 10, 11, 12, 5, 6, 7, 8]` (the stabiliser tips swap, each wingtip and
+  wing-root corner swaps with its partner on the other side; nose, tail and fin top map to themselves). It was checked three
+  ways: it is derived from the keypoint names, it is an involution, and mirroring the keypoints about the aircraft's
+  centreline maps each one closest to its partner (`prep.check_flip_idx`). **Caveat:** the mirror images are exact (< 0.02 m) for
+  the wingtips and the tail, but the wing-root keypoints were picked at |y| = 4.2 m rather than as mirror images, so they are
+  0.43 m (leading edge) and 0.69 m (trailing edge) off; on a flipped training sample those two keypoints are
+  inconsistent by up to about 5 px at 300 m. We left the keypoints unchanged (they are the Phase 7a keypoints) and **trained without horizontal flip** instead.
+- `results/phase7b/label_check_1.png` to `label_check_3.png` draw the box and keypoints on 12 training and validation frames
+  (blue = left, red = right, green = centreline); `label_check_flip.png` shows that a flipped image with labels flipped
+  through `flip_idx` keeps every index on the same part.
+
+![label check](results/phase7b/label_check_1.png)
+
+### Package
+
+Train and val images are converted to JPEG (quality 95) and written with the labels to `yolo_fw_uav/{images,labels}/{train,val}`
+plus `data.yaml` (relative paths), zipped to `data/fw_uav/yolo_fw_uav.zip` (267 MB, 2000 images, **no test-scene image**).
+An Ultralytics 8.4.171 smoke test on CPU (one epoch at 320 px on 32 images) read the dataset without errors (0 corrupt labels,
+`kpt_shape` and `flip_idx` accepted), which checks the format, not the quality of any training.
+
+### Training plan (Colab, `notebooks/train_yolo_pose_colab.ipynb`)
+
+`yolo11n-pose.pt` (the smallest YOLO pose model), `imgsz=1280` (the aircraft is small in the 1920 x 1080 frames), 100 epochs,
+patience 20 on the validation split, batch 8 on a free T4, **horizontal flip off** (`fliplr=0`, because the wing-root keypoints are not exact mirror images, so
+flipped labels would carry up to about 5 px of error; `flip_idx` stays in `data.yaml`), other augmentations at the Ultralytics defaults. Checkpoints (`last.pt` every epoch, `best.pt`, a copy every 5 epochs) are saved to Google Drive and
+the training cell resumes from `last.pt` after a disconnect. The notebook ends by printing the validation box and pose mAP.
+The notebook itself has not been run on a GPU yet.
+
+### Next (part B)
+
+Run the trained detector on the test scenes, feed its keypoints (with their confidences as the visibility) to SQPnP and the
+Kalman filter, and compare with the Phase 7a results that used ideal keypoints plus Gaussian noise. No test scene has been
+used for anything yet.
+
