@@ -9,5 +9,9 @@ for t in test_phase1.py test_phase2.py test_phase3.py test_phase4.py test_phase5
         failed=1
     fi
 done
+if [ -d data/fw_uav/val_meta ] && [ -f data/fw_uav/val.zip ]; then   # Phase 7a needs the FW-UAV6DPose data
+    echo "=== test_phase7a.py"
+    $PY test_phase7a.py || failed=1
+fi
 if [ $failed -eq 0 ]; then echo "ALL TESTS PASSED"; else echo "SOME TESTS FAILED"; fi
 exit $failed

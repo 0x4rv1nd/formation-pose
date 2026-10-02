@@ -668,3 +668,235 @@ normal level over the same steps (1.08 deg against 0.90 deg at 2 px).
 
 The 100+ m calibration bin has only 55-60 poses (the approach rarely gets that far), so R at long range is less reliable
 than in the other bins.
+
+
+## Phase 7a: FW-UAV6DPose evaluation
+
+Our pose pipeline run on the **real ground-truth poses, camera and 3D model of the FW-UAV6DPose dataset** (Liu et al.
+2026, the MF-UAVPose6D paper; please cite that paper for the dataset). No images are used and nothing is trained in
+this phase: keypoints are projected from the true poses, noise is added, and PnP and the Phase 5b Kalman filter
+estimate the pose again. Phases 1-6 are untouched; everything here is in new files.
+
+| File | Purpose |
+|------|---------|
+| `fw_uav_config.py` | Model corrections, keypoints (generated), camera, dt, range bins, glitch cut |
+| `fw_uav_io.py` | Reads the BOP metadata, masks and OBJ from `data/fw_uav/`; projects keypoints, mask visibility cache |
+| `phase7a_model_check.py` | Silhouette-vs-mask check of the model (`results/phase7a/model_vs_mask*.png`, `model_check.json`) |
+| `phase7a_keypoints.py` | Chooses the keypoints from the mesh, writes them to `fw_uav_config.py`, draws `uav_keypoints.png` |
+| `fw_uav_methods.py` | SQPnP measurement, synthetic calibration of R, `UAVKalman` (Phase 5b filter, selectable dt) |
+| `phase7a_evaluate.py` | The experiments, tables and figures (`results/phase7a/uav_*.png`, `uav_metrics.json`) |
+| `test_phase7a.py` | Sanity checks (prints PASS/FAIL) |
+
+```bash
+# needs data/fw_uav/val.zip, val_meta/ (the three JSON files per scene) and models/D0108-C20821-FixedWings-Merge.OBJ
+.venv/bin/python phase7a_model_check.py
+.venv/bin/python phase7a_keypoints.py
+.venv/bin/python phase7a_evaluate.py     # about 30 s after the one-off 75 s keypoint/mask cache
+.venv/bin/python test_phase7a.py
+```
+
+### Data and what we used
+
+- **Split:** the validation split only: 24 scenes of 100 consecutive frames (2400 frames), BOP format, one UAV per
+  frame, 1920 x 1080 images, one camera (fx = fy = 2058.73 px, principal point (960, 540)).
+- **Used:** the poses (`cam_R_m2c`, `cam_t_m2c`), the intrinsics, the 3D model, and the `mask_visib` PNGs for
+  visibility. The RGB images are not used. `px_count_visib` in `scene_gt_info.json` is 0 in every frame and is ignored.
+- **Units:** translations are in **millimetres** in the files; we convert to metres. The true range is 164-518 m
+  (median 282 m); the scenes sit mostly at 200-400 m.
+- **No timestamps.** The motion is smooth (median 0.73 m between frames), so we **assume dt = 0.1 s** (10 Hz, as in
+  our simulation) and report a sensitivity check with 0.05 s and 0.2 s.
+- **The aircraft** is a **VTOL fixed-wing UAV with a 32 m wingspan** and 19.9 m length (a nose propeller, a single
+  fuselage, a straight tapered wing, two booms with four lift rotors, a T-tail) - much larger than the "small UAV"
+  one might assume, so at 300 m it spans about 130-200 px.
+
+### The 3D model: two corrections
+
+The OBJ is an Unreal Engine export. It does **not** match the dataset's poses as it is; two corrections are needed
+(`fw_uav_config.py`), found by projecting the mesh with the ground-truth pose and comparing the silhouette with the
+visible-object mask:
+
+1. **Units:** the mesh is in **centimetres**; multiplied by 0.01 it gives metres (the translations are metres after
+   the mm conversion). Other scales give silhouettes 20x too small or far too large.
+2. **Axes:** the dataset's object frame is the mesh frame **rotated 180 degrees about x** (y and z flipped). We tried
+   all 48 signed axis permutations and four origin choices on three frames; this proper rotation was clearly best
+   (IoU 0.78 vs 0.67 for the next one, a left-right mirror), and moving the origin or rescaling barely changed it.
+
+The model-frame vertex used for the BOP pose is `R_corr @ (0.01 * v_file)`, with `R_corr = diag(1, -1, -1)`.
+Silhouette IoU of the corrected model against the mask: **0.56 min / 0.79 median /
+0.86 max** over one frame (the middle one) of **every one of the 24 scenes**, against a mean of 0.28 for the
+uncorrected mesh on six frames (`results/phase7a/model_vs_mask.png`, `model_vs_mask_all_scenes.png`). The lowest
+values belong to frames with a tiny mask (519 px), where one pixel of boundary matters.
+
+**Mesh limitations.** The OBJ is not a clean watertight model: many wing surfaces have **missing faces** (the wing
+interior is empty when the triangles are filled, so the silhouette IoU is lower than the pose accuracy deserves; the
+boundaries line up), the mesh is **slightly asymmetric** (the left and right stabiliser tips are at y = -4.32 and
++3.78 m, the centreline is at y = -0.27 m), and it has about 51,000 distinct vertices with thin parts (rotor blades).
+
+### Keypoints
+
+13 keypoints on mesh vertices, chosen by extreme-point rules in the object frame (x forward, y right, z down), in
+`fw_uav_config.py`; figure `results/phase7a/uav_keypoints.png` shows them on the top, side and front views:
+nose; tail trailing edge; fin top; left / right stabiliser tip; left / right wingtip, leading and trailing corner; left / right wing root (|y| = 4.2 m), leading and trailing edge. The rotors are not used (thin, spinning blades).
+
+![keypoints](results/phase7a/uav_keypoints.png)
+![model vs mask](results/phase7a/model_vs_mask.png)
+
+### Observations
+
+- **Projection:** each keypoint is projected with the frame's ground-truth pose and intrinsics.
+- **Visibility:** a keypoint is visible if it projects inside the image and **inside the visible mask dilated by 2 px**.
+  The dilation is needed because many keypoints (wing tips, tail corners) lie *on* the silhouette boundary: with the
+  strict mask only **57.2 %** of keypoints are visible
+  (187 of 2400 frames have fewer than 6, 7 fewer than 4); with the
+  dilation **99.4 %** (at least 10 of 13 in every frame; per-keypoint rates
+  97.1-100.0 %). **This ignores self-occlusion inside the silhouette**
+  (a keypoint behind the fuselage or wing still counts as visible), so it is optimistic.
+- **Noise:** Gaussian pixel noise of 0, 1, 2 and 5 px, 5 seeds; every method sees identical noisy pixels.
+- **Frame:** everything is in the **camera frame**: translation of the UAV in the camera frame (m) and the rotation
+  `R_m2c`. Errors are the translation error (m) and the geodesic rotation error (deg). The Kalman state uses the
+  project's pose vector `[x, y, z, roll, pitch, yaw]` with ZYX Euler angles of `R_m2c`.
+
+### Methods
+
+- **PnP only (SQPnP)** on the visible keypoints, no initial guess. A *failure* is no solution, a translation error
+  above 10 % of the range, or a rotation error above 20 deg (a relative version of the Phase 4 definition,
+  because the ranges are about five times larger).
+- **Range-calibrated Kalman filter** (Phase 5b) on the PnP measurements of each sequence: unchanged dynamics,
+  `A_MAX`, `W_MAX`, `V_INIT_MAX`, chi-squared gate and re-initialisation after 3 gated measurements (only the PnP
+  measurement and the dt differ). **Scene `000125` is cut into two sequences** and the filter restarted, because of a
+  data defect: between frames **76 and 77** the true translation jumps by 217 m and the rotation by 131 deg. (The brief
+  asked for the cut "at frame 76"; the jump is after frame 76, so the second sequence starts at frame 77: sequences
+  0-76 and 77-99.) PnP keeps all frames.
+- **Measurement noise R** is calibrated by range bin on **synthetic poses made with this UAV model, its intrinsics and
+  distance range** (4000 poses per noise level, range 140-540 m, direction through a random pixel, orientation uniform
+  on SO(3) with |pitch| < 80 deg because Euler angles are ill-defined near 90 deg), never on the validation poses; bins
+  140-250, 250-350, 350-450 and 450+ m, linear interpolation between bin centres, gross failures removed
+  (`results/phase7a/uav_noise_calibration.json`). Calibrated std of the depth / lateral x / roll error [m / m / deg]:
+
+| Noise | 150-250 m | 250-350 m | 350-450 m | 450+ m |
+|---|---|---|---|---|
+| 1 px | 0.7 / 0.2 / 0.5 | 1.5 / 0.3 / 0.7 | 2.5 / 0.6 / 1.0 | 3.7 / 0.8 / 1.2 |
+| 2 px | 1.3 / 0.3 / 1.0 | 3.0 / 0.7 / 1.5 | 5.1 / 1.2 / 2.0 | 7.7 / 1.7 / 2.3 |
+| 5 px | 3.5 / 0.8 / 2.5 | 8.1 / 1.9 / 3.4 | 14.8 / 3.4 / 4.7 | 22.0 / 5.0 / 5.7 |
+
+- **Classifier-based methods (classifier + PnP, hybrid) were skipped.** They would need a classifier retrained for this
+  UAV, camera and 100-500 m range, and, because the aircraft attitude here is arbitrary, a pose grid over the whole of
+  SO(3) rather than the 4800-cell position-and-roll grid of Phase 2; that is a different design problem, not a
+  retraining, and SQPnP is global and needs no initial guess.
+- **dt sensitivity:** the filter was also run with dt = 0.05 s and 0.2 s at 2 px; dt = 0.1 s is the main result and
+  was not chosen for its numbers.
+- **`A_MAX` (2 m/s^2), `W_MAX` (20 deg/s) and `V_INIT_MAX` (5 m/s) were chosen in Phase 3/5 for a 40-90 m simulated
+  approach, not for this aircraft at 164-518 m.** In the scenes we examined the relative speed is 5-9 m/s (median, up to 24 m/s) with
+  accelerations up to 8 m/s^2 (the model allows about 2), so the model is mismatched; we did not change them.
+
+### Results
+
+All 2400 frames, mean over 5 seeds ± std over seeds of the pooled error, medians over frames.
+
+| Noise | Method | Trans mean [m] | Trans median [m] | Rot mean [deg] | Rot median [deg] | PnP failure | Kalman gate rejection | Kalman re-inits / 2400 frames |
+|---|---|---|---|---|---|---|---|---|
+| 0 px | PnP only (SQPnP) | 0.00 ± 0.00 | 0.00 | 0.00 ± 0.00 | 0.00 | 0.00 % | - | - |
+| | Range-calibrated Kalman | 1.86 ± 0.00 | 0.00 | 0.12 ± 0.00 | 0.00 | - | 13.1 % | 98 |
+| 1 px | PnP only (SQPnP) | 1.25 ± 0.03 | 0.86 | 0.55 ± 0.05 | 0.44 | 0.04 % | - | - |
+| | Range-calibrated Kalman | 3.03 ± 0.44 | 0.60 | 0.49 ± 0.06 | 0.33 | - | 12.5 % | 81 |
+| 2 px | PnP only (SQPnP) | 2.59 ± 0.10 | 1.76 | 1.36 ± 0.05 | 0.88 | 0.29 % | - | - |
+| | Range-calibrated Kalman | 3.09 ± 0.34 | 1.15 | 0.79 ± 0.06 | 0.59 | - | 10.2 % | 61 |
+| 5 px | PnP only (SQPnP) | 7.15 ± 0.11 | 4.84 | 5.60 ± 0.19 | 2.24 | 2.43 % | - | - |
+| | Range-calibrated Kalman | 5.10 ± 0.59 | 3.52 | 2.57 ± 0.50 | 1.29 | - | 8.1 % | 31 |
+
+Mean translation error [m] (and as % of the range) / mean rotation error [deg] by true distance (frames in each bin at 2 px
+shown in the first row; the bins hold different scenes, so this mixes distance with scene and attitude):
+
+| Noise | Method | 150-250 m | 250-350 m | 350-450 m | 450+ m |
+|---|---|---|---|---|---|
+| | frames in bin | 846 | 884 | 527 | 143 |
+| 1 px | PnP only | 0.63 m (0.29 %) / 0.35° | 1.17 m (0.39 %) / 0.50° | 1.97 m (0.51 %) / 0.64° | 2.66 m (0.55 %) / 1.74° |
+| 1 px | Kalman | 3.69 m (1.59 %) / 0.39° | 3.75 m (1.17 %) / 0.48° | 1.22 m (0.31 %) / 0.46° | 1.38 m (0.28 %) / 1.25° |
+| 2 px | PnP only | 1.27 m (0.57 %) / 0.72° | 2.39 m (0.80 %) / 1.04° | 4.19 m (1.08 %) / 1.83° | 5.75 m (1.19 %) / 5.32° |
+| 2 px | Kalman | 4.17 m (1.81 %) / 0.62° | 2.45 m (0.79 %) / 0.75° | 2.54 m (0.65 %) / 1.03° | 2.73 m (0.57 %) / 1.27° |
+| 5 px | PnP only | 3.44 m (1.56 %) / 3.00° | 6.66 m (2.22 %) / 4.46° | 11.42 m (2.93 %) / 8.72° | 16.39 m (3.39 %) / 16.46° |
+| 5 px | Kalman | 3.56 m (1.59 %) / 1.62° | 4.03 m (1.36 %) / 1.68° | 7.47 m (1.91 %) / 3.56° | 12.11 m (2.51 %) / 10.13° |
+
+![error vs noise](results/phase7a/uav_error_vs_noise.png)
+(PnP at 0 px is exact to about 1e-6 and is drawn at the 1e-3 floor.)
+
+![error vs distance](results/phase7a/uav_error_vs_distance.png)
+
+![scene 000012](results/phase7a/uav_sequence_000012.png)
+
+**dt sensitivity (Kalman filter, 2 px):**
+
+| dt | Trans mean [m] | Rot mean [deg] | Gate rejection | Re-inits |
+|---|---|---|---|---|
+| 0.1 s (main) | 3.09 ± 0.34 | 0.79 ± 0.06 | 10.2 % | 61 |
+| 0.05 s | 5.51 ± 0.78 | 0.92 ± 0.06 | 18.5 % | 120 |
+| 0.2 s | 1.27 ± 0.07 | 0.80 ± 0.07 | 3.5 % | 11 |
+
+**Per scene at 2 px** (mean over seeds; the Kalman filter beats PnP in translation in 20 of 24 scenes):
+
+| Scene | Range [m] | PnP trans / rot | Kalman trans / rot | Gate rejection | Re-inits |
+|---|---|---|---|---|---|
+| 000009 | 306-332 | 2.77 m / 0.98° | 12.02 m / 0.92° | 42 % | 12.6 |
+| 000010 | 185-265 | 1.45 m / 1.13° | 0.70 m / 0.72° | 22 % | 4.6 |
+| 000011 | 295-351 | 2.73 m / 1.56° | 1.41 m / 0.70° | 10 % | 2.2 |
+| 000012 | 254-260 | 1.87 m / 0.85° | 0.96 m / 1.16° | 3 % | 1.0 |
+| 000029 | 280-350 | 2.73 m / 1.01° | 1.33 m / 0.62° | 0 % | 0.0 |
+| 000030 | 175-234 | 1.27 m / 0.68° | 0.50 m / 0.43° | 0 % | 0.0 |
+| 000042 | 241-254 | 1.74 m / 0.76° | 1.08 m / 1.05° | 3 % | 1.0 |
+| 000043 | 310-381 | 2.70 m / 1.07° | 1.13 m / 0.59° | 0 % | 0.0 |
+| 000044 | 241-290 | 2.01 m / 0.80° | 1.09 m / 0.47° | 0 % | 0.0 |
+| 000045 | 244-247 | 1.68 m / 0.69° | 0.62 m / 0.52° | 0 % | 0.0 |
+| 000064 | 165-205 | 0.81 m / 0.63° | 0.98 m / 0.39° | 0 % | 0.0 |
+| 000065 | 164-211 | 0.78 m / 0.61° | 0.90 m / 0.37° | 0 % | 0.0 |
+| 000066 | 211-278 | 1.36 m / 0.81° | 0.65 m / 0.62° | 9 % | 1.8 |
+| 000086 | 265-289 | 1.95 m / 1.27° | 1.55 m / 0.95° | 0 % | 0.0 |
+| 000087 | 337-384 | 4.07 m / 1.86° | 1.62 m / 0.76° | 1 % | 0.0 |
+| 000088 | 271-288 | 2.43 m / 1.04° | 1.25 m / 0.75° | 0 % | 0.0 |
+| 000096 | 197-247 | 1.07 m / 0.69° | 29.59 m / 0.99° | 82 % | 26.8 |
+| 000111 | 225-230 | 1.36 m / 0.68° | 0.60 m / 0.46° | 0 % | 0.0 |
+| 000122 | 413-505 | 5.22 m / 3.80° | 2.25 m / 1.25° | 20 % | 2.6 |
+| 000123 | 379-412 | 4.64 m / 1.57° | 3.40 m / 0.92° | 1 % | 0.0 |
+| 000124 | 380-437 | 4.14 m / 1.42° | 3.79 m / 0.77° | 1 % | 0.0 |
+| 000125 | 438-518 | 5.62 m / 4.64° | 3.01 m / 1.21° | 24 % | 3.0 |
+| 000136 | 344-443 | 4.02 m / 2.97° | 2.08 m / 1.87° | 27 % | 5.0 |
+| 000137 | 343-357 | 3.72 m / 1.02° | 1.76 m / 0.56° | 0 % | 0.0 |
+
+### What changes at 164-518 m with a 32 m UAV
+
+- **Absolute translation error is larger and grows with range, relative error is small.** At 2 px, PnP alone gives
+  2.59 m / 1.36 deg (synthetic approach at 40-90 m: 0.89 m / 1.50 deg), which is
+  0.57 % of the range at 150-250 m and 1.19 % at 450+ m. At 5 px it is
+  7.15 m / 5.60 deg (synthetic: 2.76 m / 4.35 deg). The error is dominated by depth
+  (the calibrated depth std is 4-7 times the lateral std) and grows roughly as range squared. Rotation error is
+  of the same order as in the simulation (we did not investigate why it does not grow with range as the translation does).
+- **The Kalman filter helps rotation and the typical frame, but not the mean translation at low noise.** At 2 px its
+  median errors are better than PnP's (1.15 vs 1.76 m, 0.59 vs 0.88 deg) and
+  its mean rotation error is lower (0.79 vs 1.36 deg), and at 5 px it is better in
+  both means (5.10 vs 7.15 m, 2.57 vs 5.60 deg). But at 0-2 px its
+  **mean translation error is higher than PnP's** (1.86 vs 0.00 m at 0 px, 3.03 vs 1.25 at 1 px,
+  3.09 vs 2.59 at 2 px).
+- **Why: gate lock-outs.** The gate rejects 10 % of the measurements at 2 px (nominal 0.1 %; 8-13 % at all
+  noise levels; the Phase 5b simulation had 0.4 %). Mostly it is two scenes, `000096` and `000009`, in which the
+  position estimate drifts away from the true motion (faster relative accelerations than the model allows) and every
+  measurement is then gated: the re-initialisation resets only the attitude (as in Phase 5b), not the position, so the
+  position error stays at tens of metres (30 m mean in `000096` at 2 px). At 0 px the
+  floor on R (0.01 m) makes the gate hypersensitive to any model mismatch, so even the noise-free filter loses
+  13 % of its measurements. In scene `000136` (pitch up to 89 deg, a 40 deg jump in the
+  Euler angles between two frames) the gate rejects 27 % of the measurements and its rotation error is the largest of all
+  scenes; we did not verify that this is the cause for every gated scene.
+  We did not tune anything to fix this.
+- **dt matters.** A smaller assumed dt makes the filter worse (translation 5.51 m at dt = 0.05 s,
+  3.09 m at 0.1 s, 1.27 m at 0.2 s) and gates more measurements (19 %, 10 %, 4 %); we did not
+  investigate why. The 0.1 s result is the main one; the others only show that the outcome depends on this assumption.
+
+### Limitations and next step
+
+- Keypoints are ideal (the true projections) plus Gaussian noise; there is no detector, no outliers and no mislabelled
+  keypoints. Visibility ignores self-occlusion; the dilated mask test is generous.
+- Validation split only (24 scenes, one camera, 100 frames each, so 2400 correlated frames); the noise calibration is on
+  synthetic poses with uniformly random attitude, which the real flights do not follow.
+- The OBJ has missing wing faces and is slightly asymmetric; keypoints were checked against the mesh, not an
+  independent CAD model.
+- dt is assumed. Filter constants are those of the simulation. Euler angles are used for the attitude state, which
+  breaks down near pitch +/-90 deg.
+- **Next step (7b):** a YOLO keypoint detector trained on the dataset's images, replacing the projected keypoints.
