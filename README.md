@@ -439,3 +439,176 @@ Classifier-only numbers and no-solution counts are in `results/pnp_dropout_metri
 - **Summary**: the classifier is useful only as an initial guess that has seen missing keypoints, and
   then it mainly removes occasional gross errors; it does not improve typical accuracy. These are
   simulated, ideal-detector results (our occlusion model, Gaussian noise only).
+
+## Phase 5: filtering on top of PnP
+
+Two filters that use the PnP pose as their measurement, compared with the Phase 3 baseline
+particle filter (untouched) and with single-frame PnP.
+
+| File | Purpose |
+|------|---------|
+| `filters.py` | added `KalmanFilter`, `ImprovedParticleFilter`, `PnPOnly`, `pnp_measurement`, `calibrate_pnp_noise`; `run_filter` got an optional `outage` argument (default behaviour unchanged) |
+| `run_phase5.py` | calibration, experiments A and B, figures, metrics |
+| `run_phase5_ablation.py` | the likelihood / particle-source ablation table in the Discussion |
+| `test_phase5.py` | sanity checks (prints PASS/FAIL) |
+| `results/kf_noise_calibration.json`, `filter_metrics.json` | calibrated R and all numbers |
+| `results/filter_errors_2px.png`, `filter_noise_sweep.png`, `filter_outage.png`, `filter_trajectory.png` | figures |
+
+```bash
+python test_phase5.py
+python run_phase5.py     # about 50 s
+```
+
+### The PnP measurement
+
+`hybrid_pnp` (Phase 4b) started from the **original** classifier (the same one the Phase 3 filter uses).
+If fewer than 4 keypoints are visible, or both solvers fail and the hybrid falls back to the coarse
+classifier pose, there is no measurement (a coarse pose is not trusted as a measurement).
+
+### Kalman filter
+
+- **State (12):** `[x, y, z, vx, vy, vz, roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate]`,
+  constant velocity for both position and angles, linear. Angle innovations are wrapped to [-180, 180).
+- **Q:** discrete white-noise-acceleration model, per axis with state `[p, v]`:
+  `Q = sigma_a^2 [[dt^4/4, dt^3/2], [dt^3/2, dt^2]]`. The Phase 3 filter uses a uniform random
+  acceleration in +/-`A_MAX`, whose std is `A_MAX / sqrt(3)`, so `sigma_a = A_MAX / sqrt(3)` for position
+  and `W_MAX / sqrt(3)` deg/s^2 for the angles (we read `W_MAX` as how fast the rate can change
+  per second: our interpretation, since in Phase 3 it is a rate, not an acceleration).
+- **R (calibration):** `calibrate_pnp_noise` runs the PnP measurement on 1000 random poses (seed 424242,
+  used nowhere else) at each noise level and takes the 6x6 error covariance. Position errors are divided by
+  `range / 65 m` first, so one covariance describes the reference range; at run time the position
+  variances are scaled by `(range / 65)^2` using the range of the measurement. Frames with no solution
+  or a gross failure (position > 10 m or attitude > 20 deg, the Phase 4 definition) are left out of
+  the calibration (11 of 1000 at 5 px, none otherwise), because the gate handles those at run
+  time. A floor of 0.01 m / 0.01 deg std is added so that R is invertible at 0 px.
+  Calibrated std at 65 m (x, y, z in m; roll, pitch, yaw in deg):
+
+| Noise | x | y | z | roll | pitch | yaw |
+|-------|------|------|------|------|------|------|
+| 0 px (floor) | 0.010 | 0.010 | 0.010 | 0.010 | 0.010 | 0.010 |
+| 1 px | 0.390 | 0.211 | 0.092 | 0.526 | 0.388 | 0.456 |
+| 2 px | 0.781 | 0.423 | 0.183 | 1.052 | 0.777 | 0.913 |
+| 5 px | 1.797 | 1.004 | 0.443 | 2.636 | 1.938 | 2.278 |
+
+- **Initialisation:** from the first PnP measurement, velocities and rates zero, with std 5 m/s
+  (`V_INIT_MAX`) and 20 deg/s (`W_MAX`) as the initial uncertainty.
+- **Gating:** the update is skipped if the squared Mahalanobis distance of the innovation exceeds 22.46
+  (chi-squared 99.9 %, 6 dof); the rejections are counted. With no measurement or a rejected one the
+  filter only predicts.
+
+### Improved particle filter
+
+Same as the Phase 3 filter (dynamics, measured boresight, systematic resampling), with these changes only:
+Gaussian likelihood `w_i ~ exp(-SSE_i / (2 sigma^2))`, `sigma = max(noise_px, 1)` px, SSE over the
+visible keypoints in log space; initial and fresh particles are drawn from `N(PnP pose, R)` instead of the
+classifier bin plus error samples; N = 1000, alpha = 0.9 every step. During an outage there is no PnP pose, so the
+"fresh" 10 % are copied from the current cloud (plain resampling).
+
+### Experiments
+
+Approach trajectory, noise 0, 1, 2, 5 px, 5 seeds (each method sees the same observations for a given
+seed). **A**: normal. **B**: all keypoints hidden for 4.0 <= t < 5.0 s (10 steps); single-frame PnP has no
+output there. Cells are the mean over seeds of the per-run statistic (the standard deviations are in
+`results/filter_metrics.json`). "Gated" = Kalman updates rejected per run (101 steps).
+
+**Experiment A (normal run)**
+
+| Noise | Method | Pos mean / med [m] | Att mean / med [deg] | Gated | ms/step |
+|------|--------|------|------|------|------|
+| 0 px | Phase 3 PF (Config B) | 4.91 / 4.68 | 5.19 / 4.64 | - | 8.5 |
+|  | PnP alone | 0.00 / 0.00 | 0.00 / 0.00 | - | 0.3 |
+|  | Improved PF | 0.58 / 0.58 | 0.50 / 0.46 | - | 2.1 |
+|  | Kalman filter | 0.00 / 0.00 | 0.00 / 0.00 | 0.0 | 0.3 |
+| 1 px | Phase 3 PF (Config B) | 6.77 / 6.47 | 5.90 / 5.18 | - | 8.5 |
+|  | PnP alone | 0.43 / 0.31 | 0.74 / 0.72 | - | 0.3 |
+|  | Improved PF | 0.75 / 0.70 | 1.10 / 1.06 | - | 2.1 |
+|  | Kalman filter | 0.23 / 0.16 | 0.75 / 0.70 | 2.2 | 0.3 |
+| 2 px | Phase 3 PF (Config B) | 6.35 / 6.07 | 6.20 / 5.64 | - | 8.5 |
+|  | PnP alone | 0.87 / 0.63 | 1.49 / 1.44 | - | 0.3 |
+|  | Improved PF | 1.18 / 1.05 | 1.56 / 1.47 | - | 2.1 |
+|  | Kalman filter | 0.43 / 0.30 | 1.50 / 1.43 | 2.4 | 0.3 |
+| 5 px | Phase 3 PF (Config B) | 7.91 / 7.70 | 7.45 / 7.12 | - | 8.5 |
+|  | PnP alone | 2.17 / 1.60 | 3.72 / 3.56 | - | 0.3 |
+|  | Improved PF | 2.13 / 1.76 | 3.08 / 2.88 | - | 2.1 |
+|  | Kalman filter | 1.07 / 0.82 | 3.67 / 3.70 | 3.2 | 0.4 |
+
+(Runtimes include the classifier and PnP calls for every method except the baseline.)
+
+**Experiment B (outage 4.0-5.0 s; "after" = 5.0-6.0 s), mean errors**
+
+| Noise | Method | Pos in outage [m] | Att in outage [deg] | Pos after [m] | Att after [deg] | Gated |
+|------|--------|------|------|------|------|------|
+| 0 px | Phase 3 PF (Config B) | 9.42 | 10.50 | 6.54 | 9.02 | - |
+|  | PnP alone | missing (10 steps) | missing | 0.00 | 0.00 | - |
+|  | Improved PF | 2.70 | 5.97 | 0.95 | 1.25 | - |
+|  | Kalman filter | 0.00 | 4.10 | 0.00 | 0.00 | 0.0 |
+| 1 px | Phase 3 PF (Config B) | 9.09 | 10.45 | 7.64 | 8.42 | - |
+|  | PnP alone | missing | missing | 0.42 | 0.72 | - |
+|  | Improved PF | 3.68 | 6.16 | 1.41 | 1.96 | - |
+|  | Kalman filter | 0.48 | 8.67 | 0.75 | 28.34 | 26.6 |
+| 2 px | Phase 3 PF (Config B) | 9.24 | 10.46 | 8.93 | 9.58 | - |
+|  | PnP alone | missing | missing | 0.84 | 1.45 | - |
+|  | Improved PF | 3.17 | 6.37 | 1.54 | 2.10 | - |
+|  | Kalman filter | 0.82 | 11.51 | 1.24 | 35.08 | 28.2 |
+| 5 px | Phase 3 PF (Config B) | 9.33 | 12.17 | 10.30 | 10.56 | - |
+|  | PnP alone | missing | missing | 2.10 | 3.65 | - |
+|  | Improved PF | 2.95 | 6.57 | 3.07 | 3.75 | - |
+|  | Kalman filter | 2.20 | 16.24 | 3.03 | 45.59 | 21.0 |
+
+![errors at 2 px](results/filter_errors_2px.png)
+![noise sweep](results/filter_noise_sweep.png)
+![outage](results/filter_outage.png)
+![Kalman trajectory](results/filter_trajectory.png)
+
+### Discussion
+
+**Where filtering helps.**
+- *Position under noise.* With 1-5 px noise the Kalman filter roughly halves the position error of
+  single-frame PnP (0.43 vs 0.87 m at 2 px, 1.07 vs 2.17 m at 5 px). Position moves almost at constant
+  velocity, which is exactly what the model assumes, so averaging over time pays off.
+- *Outages.* The Kalman filter keeps a position estimate through the gap (0.5-2.2 m, similar to or better than
+  PnP's own noise level) where single-frame PnP has nothing.
+
+**Where it does not.**
+- *Zero noise.* The Kalman filter equals PnP (0.00 m): nothing to average, and with R at its floor it simply follows
+  the measurement without visible lag. The improved particle filter is *worse* than PnP at 0 px
+  (0.58 m vs 0.00) and also at 1-2 px (1.18 vs 0.87 m at 2 px): it only approximates the posterior
+  with 1000 samples, and its random-rate dynamics add scatter that a single PnP solve does not have.
+- *Attitude.* The Kalman filter's attitude error is the same as PnP's (1.50 vs 1.49 deg at 2 px, 3.67 vs 3.72 at
+  5 px). The roll swings +/-15 deg in 5 s, so the constant-rate model lags as much as smoothing gains.
+- *After an outage the Kalman filter fails badly in attitude* (28-46 deg mean over the following second at
+  noise > 0). The cause, checked step by step for seed 0 at 2 px: the roll rate estimated before the gap
+  (-6.9 deg/s) is wrong for the next second (the true rate swings to +15), so the extrapolated roll
+  is 24 deg off at t = 5 s, about 6 standard deviations of the predicted covariance. The gate then
+  rejects 14 consecutive *good* measurements (a gate lock-out, which is why the gated counts are 21-28 per run), while
+  the roll error drifts to -47 deg, until the covariance has grown enough at t = 6.4 s. Position is fine because it really is near constant velocity.
+  This is a consequence of the specified design (white-noise-acceleration Q from `A_MAX`/`W_MAX`, hard gate), not
+  tuned or fixed here. Typical remedies, which we did not apply: re-initialise after N consecutive rejections, or
+  inflate the angular Q.
+- *The gate rejects 2-3 % of normal measurements* (nominal 0.1 %). Measured on fresh random poses at 2 px,
+  3 % of PnP errors exceed the gate under the calibrated R. The reason is that depth error grows faster
+  than linearly with range: the position std rescaled to 65 m is 0.45 m for ranges of 25-50 m, 0.77 m (50-75),
+  1.17 m (75-100) and 1.59 m (100-150), whereas the specified `(range / 65)^2` variance scaling assumes it is
+  constant. At the far end of the trajectory R is therefore too small.
+- *The single-frame PnP beats the filters* in these cases: attitude at 0-2 px (equal or marginally better than
+  the Kalman filter, clearly better than the improved PF), position at 0-2 px against the improved PF, and everything after the outage
+  against the Kalman filter's attitude.
+
+**Improved vs Phase 3 baseline particle filter.** The improved filter is far better (1.2 vs 6.4 m and 1.6 vs 6.2 deg at
+2 px) and approaches PnP quality, but it is not better than PnP itself except for attitude at 5 px
+(3.08 vs 3.72 deg). Its two changes were made together, so to see which matters we ran an ablation
+(N = 1000, alpha = 0.9 every step, 5 seeds, mean position [m] / attitude [deg]; reproduce with
+`python run_phase5_ablation.py`, which needs `results/kf_noise_calibration.json` from `run_phase5.py`):
+
+| Likelihood / particle source | 0 px | 2 px | 5 px |
+|------|------|------|------|
+| 1/(MSE+eps) + classifier (baseline design, N = 1000) | 5.82 / 6.36 | 7.80 / 7.15 | 9.28 / 8.43 |
+| Gaussian + classifier | 4.81 / 5.56 | 6.53 / 4.91 | 6.35 / 5.90 |
+| 1/(MSE+eps) + PnP | 1.18 / 1.70 | 2.15 / 3.60 | 3.51 / 5.54 |
+| Gaussian + PnP (improved) | 0.58 / 0.50 | 1.18 / 1.56 | 2.13 / 3.08 |
+
+The paper's choice of drawing the particles from the classifier and its error samples is what caused the
+baseline's failure: those proposals are 5-7 m off, and no weighting can pull the estimate below the error of the
+particles it is given. The `1/(MSE+eps)` likelihood is a smaller second problem (it weights particles only
+polynomially, not sharply), worth about a factor of 1.5-2 once the particles are good.
+Both are simulation results with an idealised detector (Gaussian pixel noise, our occlusion model).
