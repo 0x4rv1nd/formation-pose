@@ -10,9 +10,11 @@ methods run in the camera frame:
 Scene 000125 contains a data glitch between frames 76 and 77 (translation jump of 217 m, rotation jump of 131 deg): the
 filter is restarted at frame 77 (sequences 0-76 and 77-99), PnP keeps all frames. dt = 0.1 s is assumed (no timestamps); dt = 0.05 s and 0.2 s are run as a sensitivity check at 2 px.
 
-    python phase7a_evaluate.py
+    python phase7a_evaluate.py                    # full-state re-initialisation (Phase 7a-fix) -> results/phase7a_fix/
+    python phase7a_evaluate.py --reinit attitude  # the original Phase 7a filter (attitude-only re-init) -> results/phase7a/
 """
 
+import argparse
 import json
 import os
 
@@ -38,7 +40,7 @@ def sequences(scene, n_frames):
     return list(zip(cuts[:-1], cuts[1:]))
 
 
-def run_scene(c, scene, noise, seed, range_bins, dt=cfg.DT, run_pnp=True):
+def run_scene(c, scene, noise, seed, range_bins, dt=cfg.DT, reinit_mode="full"):
     """One scene, one noise level and seed. Returns per-frame arrays for PnP and the Kalman filter."""
     T = len(c["frames"])
     rng = np.random.default_rng([int(scene), int(noise * 10), seed])      # same noisy pixels for every method / dt
@@ -55,7 +57,7 @@ def run_scene(c, scene, noise, seed, range_bins, dt=cfg.DT, run_pnp=True):
     est = np.full((T, 6), np.nan)
     gated = offered = reinit = 0
     for a, b in sequences(scene, T):
-        kf = meth.UAVKalman(range_bins, dt)
+        kf = meth.UAVKalman(range_bins, dt, reinit_mode)
         for i in range(a, b):
             est[i] = kf.initialise(z[i]) if i == a else kf.step(z[i])
             if np.isfinite(est[i]).all():
@@ -111,7 +113,13 @@ def aggregate(per_seed):
 
 
 def main():
+    global OUT_DIR
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--reinit", choices=["attitude", "full"], default="full")
+    mode = parser.parse_args().reinit
+    OUT_DIR = os.path.join("results", "phase7a" if mode == "attitude" else "phase7a_fix")
     os.makedirs(OUT_DIR, exist_ok=True)
+    print(f"Kalman re-initialisation mode: {mode} -> {OUT_DIR}")
     cache = io.build_keypoint_cache(cfg.KEYPOINTS)
     K = cache[io.scenes()[0]]["K"]
 
@@ -141,7 +149,7 @@ def main():
     for noise in cfg.NOISES:
         per_seed = []
         for seed in cfg.SEEDS:
-            runs = {s: run_scene(cache[s], s, noise, seed, calib[noise]["bins"]) for s in cache}
+            runs = {s: run_scene(cache[s], s, noise, seed, calib[noise]["bins"], reinit_mode=mode) for s in cache}
             per_seed.append(summarise(runs))
             if noise == 2.0:
                 for s, r in runs.items():
@@ -158,7 +166,7 @@ def main():
     # ---- dt sensitivity (2 px) ----------------------------------------------------------------------
     sens = {}
     for dt in [cfg.DT] + cfg.DT_SENSITIVITY:
-        ps = [summarise({s: run_scene(cache[s], s, 2.0, seed, calib[2.0]["bins"], dt=dt) for s in cache})
+        ps = [summarise({s: run_scene(cache[s], s, 2.0, seed, calib[2.0]["bins"], dt=dt, reinit_mode=mode) for s in cache})
               for seed in cfg.SEEDS]
         sens[f"{dt:g}"] = aggregate(ps)["all"]
     nan_check = bool(all(np.isfinite(r["kf_pos"]).all() and np.isfinite(r["kf_rot"]).all()
@@ -196,7 +204,7 @@ def main():
     print("Kalman results free of NaN:", nan_check)
 
     with open(os.path.join(OUT_DIR, "uav_metrics.json"), "w") as fh:
-        json.dump({"settings": {"noises_px": cfg.NOISES, "n_seeds": len(cfg.SEEDS), "dt_s": cfg.DT,
+        json.dump({"settings": {"noises_px": cfg.NOISES, "n_seeds": len(cfg.SEEDS), "dt_s": cfg.DT, "reinit_mode": mode,
                                 "range_bins_m": [150, 250, 350, 450, None], "n_frames": int(sum(len(c["frames"]) for c in cache.values())),
                                 "glitch_splits": cfg.GLITCH_SPLITS, "stats": "[mean over seeds, std over seeds]"},
                    "visibility": vis, "results": results, "per_scene_2px": per_scene, "dt_sensitivity_2px": sens, "kalman_no_nan": nan_check}, fh, indent=1)
@@ -264,7 +272,7 @@ def main():
     fig.savefig(os.path.join(OUT_DIR, "uav_sequence_000012.png"), dpi=200)
     plt.close(fig)
     print("\nSaved uav_metrics.json, uav_noise_calibration.json, uav_error_vs_noise.png, uav_error_vs_distance.png, "
-          "uav_sequence_000012.png in results/phase7a/")
+          f"uav_sequence_000012.png in {OUT_DIR}/")
 
 
 if __name__ == "__main__":

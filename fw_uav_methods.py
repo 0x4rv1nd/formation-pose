@@ -139,8 +139,8 @@ class UAVKalman(filters.RangeKalmanFilter):
     None instead of an observation and (2) the time step dt, which enters F and Q only (A_MAX, W_MAX unchanged).
     """
 
-    def __init__(self, range_bins, dt=cfg.DT):
-        super().__init__(None, range_bins)
+    def __init__(self, range_bins, dt=cfg.DT, reinit_mode="full"):
+        super().__init__(None, range_bins, reinit_mode=reinit_mode)
         self.F[0:3, 3:6] = dt * np.eye(3)
         self.F[6:9, 9:12] = dt * np.eye(3)
         q_block = np.array([[dt ** 4 / 4, dt ** 3 / 2], [dt ** 3 / 2, dt ** 2]])

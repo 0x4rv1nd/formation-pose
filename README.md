@@ -900,3 +900,101 @@ shown in the first row; the bins hold different scenes, so this mixes distance w
 - dt is assumed. Filter constants are those of the simulation. Euler angles are used for the attitude state, which
   breaks down near pitch +/-90 deg.
 - **Next step (7b):** a YOLO keypoint detector trained on the dataset's images, replacing the projected keypoints.
+
+
+## Phase 7a-fix: full-state re-initialisation of the Kalman filter
+
+**Why.** On FW-UAV6DPose the Phase 5b filter locked out in some scenes (`000096`: 82 % of the measurements gated, 30 m mean
+translation error at 2 px): the position estimate drifts away from the true motion, every measurement is then rejected, and
+the Phase 5b re-initialisation resets only the attitude, so the position never recovers. The fix was decided in advance and
+is not tuned: after 3 consecutive gated measurements the **whole state is reset from the current PnP measurement**
+(position and attitude = measurement with covariance R, velocities and rates 0 with the initial std of the first step).
+`RangeKalmanFilter(..., reinit_mode="full")` is now the default; `reinit_mode="attitude"` is the Phase 5b behaviour and the
+Phase 5b / Phase 6 scripts and tests request it explicitly (their stored results still reproduce exactly).
+`A_MAX`, `W_MAX`, `V_INIT_MAX` and dt are unchanged: retuning them on the validation set would be tuning on test data.
+
+```bash
+.venv/bin/python phase7a_evaluate.py --reinit attitude   # before -> results/phase7a/
+.venv/bin/python phase7a_evaluate.py                     # after  -> results/phase7a_fix/
+.venv/bin/python phase7a_fix_report.py                   # before/after tables and figure
+.venv/bin/python run_phase7a_fix_synthetic.py            # synthetic Phase 5/5b check
+```
+
+### FW-UAV6DPose: before / after (all 2400 frames, mean ± std over 5 seeds)
+
+| Noise | Filter | Trans mean [m] | Trans median [m] | Rot mean [deg] | Rot median [deg] | Gate rejection | Re-inits |
+|---|---|---|---|---|---|---|---|
+| 0 px | PnP only (reference) | 0.00 | 0.00 | 0.00 | 0.00 | - | - |
+| | Kalman, attitude re-init (before) | 1.86 ± 0.00 | 0.00 | 0.12 ± 0.00 | 0.00 | 13.1 % | 98 |
+| | Kalman, full re-init (after) | 0.01 ± 0.00 | 0.00 | 0.07 ± 0.00 | 0.00 | 5.5 % | 39 |
+| 1 px | PnP only (reference) | 1.25 | 0.86 | 0.55 | 0.44 | - | - |
+| | Kalman, attitude re-init (before) | 3.03 ± 0.44 | 0.60 | 0.49 ± 0.06 | 0.33 | 12.5 % | 81 |
+| | Kalman, full re-init (after) | 0.78 ± 0.03 | 0.55 | 0.45 ± 0.06 | 0.32 | 6.2 % | 32 |
+| 2 px | PnP only (reference) | 2.59 | 1.76 | 1.36 | 0.88 | - | - |
+| | Kalman, attitude re-init (before) | 3.09 ± 0.34 | 1.15 | 0.79 ± 0.06 | 0.59 | 10.2 % | 61 |
+| | Kalman, full re-init (after) | 1.52 ± 0.07 | 1.06 | 0.76 ± 0.06 | 0.57 | 5.4 % | 23 |
+| 5 px | PnP only (reference) | 7.15 | 4.84 | 5.60 | 2.24 | - | - |
+| | Kalman, attitude re-init (before) | 5.10 ± 0.59 | 3.52 | 2.57 ± 0.50 | 1.29 | 8.1 % | 31 |
+| | Kalman, full re-init (after) | 4.73 ± 0.10 | 3.50 | 2.53 ± 0.46 | 1.28 | 6.8 % | 21 |
+
+| Scene (2 px) | PnP trans / rot | Kalman before: trans / rot, gate, re-inits | Kalman after: trans / rot, gate, re-inits |
+|---|---|---|---|
+| 000096 | 1.07 m / 0.69° | 29.59 m / 0.99°, 82 %, 26.8 | 0.57 m / 0.51°, 3 %, 1.0 |
+| 000009 | 2.77 m / 0.98° | 12.02 m / 0.92°, 42 %, 12.6 | 1.53 m / 0.64°, 5 %, 0.6 |
+
+Kalman beats PnP in translation in 20 of 24 scenes before and 22 after (2 px).
+
+| dt | Trans mean before / after [m] | Rot mean before / after [deg] | Gate rejection before / after | Re-inits before / after |
+|---|---|---|---|---|
+| 0.1 s | 3.09 / 1.52 | 0.79 / 0.76 | 10.2 % / 5.4 % | 61 / 23 |
+| 0.05 s | 5.51 / 1.84 | 0.92 / 0.89 | 18.5 % / 8.5 % | 120 / 43 |
+| 0.2 s | 1.27 / 1.31 | 0.80 / 0.80 | 3.5 % / 3.5 % | 11 / 10 |
+
+![before / after](results/phase7a_fix/uav_before_after.png)
+
+- **The lock-outs are gone.** At 2 px the mean translation error falls from 3.09 to **1.52 m** (PnP alone: 2.59 m), the
+  mean rotation error from 0.79 to 0.76 deg, and the filter now beats PnP in translation at 1, 2 and 5 px and in
+  22 of 24 scenes (at 0 px PnP is exact and the filter is 0.01 m off). Scenes `000096` and `000009` drop from 29.6 / 12.0 m to 0.57 / 1.53 m.
+- **At 0 px** the filter is now close to exact (0.01 m) instead of losing 1.9 m on average.
+- **Median errors barely change** (1.15 to 1.06 m at 2 px): the fix removes the catastrophic tail, not the typical error.
+- **The gate still rejects 5-7 % of the measurements** (nominal 0.1 %; 0.4 % on the synthetic approach) and there are
+  still 21-39 re-initialisations over the 2400 frames: the motion model does not fit the aircraft's manoeuvres (below).
+- **dt sensitivity is much smaller after the fix:** 1.84 / 1.52 / 1.31 m translation at dt = 0.05 / 0.1 / 0.2 s, against
+  5.51 / 3.09 / 1.27 m before. 0.1 s remains the main result (it was fixed in advance, not picked for its numbers).
+
+### Synthetic check (Phase 5 / 5b experiments, same seeds and settings)
+
+Experiment A is **unchanged** at every noise level: no re-initialisation ever triggers in the normal run. In experiment B
+(outage 4-5 s) the full reset is **slightly worse in position after the outage** (it throws away a good position and velocity
+estimate when it resets) and the same in attitude:
+
+| Noise | Filter | Pos mean / att mean, normal run | Gate rejection | Pos in outage / after [m] | Att in outage / after [deg] | Re-inits (outage run) |
+|---|---|---|---|---|---|---|
+| 0 px | attitude re-init (Phase 5b) | 0.00 m / 0.00° | 0.0 % | 0.00 / 0.00 | 4.10 / 0.00 | 0.0 |
+| 0 px | full re-init | 0.00 m / 0.00° | 0.0 % | 0.00 / 0.00 | 4.10 / 0.00 | 0.0 |
+| 1 px | attitude re-init (Phase 5b) | 0.23 m / 0.76° | 0.4 % | 0.44 / 0.36 | 9.13 / 4.78 | 1.0 |
+| 1 px | full re-init | 0.23 m / 0.76° | 0.4 % | 0.44 / 0.42 | 9.13 / 4.78 | 1.0 |
+| 2 px | attitude re-init (Phase 5b) | 0.43 m / 1.53° | 0.4 % | 0.73 / 0.61 | 12.13 / 6.21 | 1.0 |
+| 2 px | full re-init | 0.43 m / 1.53° | 0.4 % | 0.73 / 0.80 | 12.13 / 6.22 | 1.0 |
+| 5 px | attitude re-init (Phase 5b) | 1.03 m / 3.66° | 0.8 % | 1.63 / 1.33 | 16.44 / 8.89 | 1.0 |
+| 5 px | full re-init | 1.03 m / 3.66° | 0.8 % | 1.63 / 1.76 | 16.44 / 8.92 | 1.0 |
+
+At 2 px the position error in the second after the outage is 0.80 m instead of 0.61 m (1.76 instead of 1.33 m at 5 px,
+0.42 instead of 0.36 m at 1 px); everything else, including the 4.8-8.9 deg attitude error after the outage, is the same to
+within 0.03 deg. Full numbers: `results/phase7a_fix/synthetic_comparison.json`.
+
+### Limitations that remain
+
+- **Motion-model mismatch.** The filter's dynamics (`A_MAX` = 2 m/s^2 for position, `W_MAX` = 20 deg/s for attitude rates,
+  `V_INIT_MAX` = 5 m/s) were chosen for a 40-90 m simulated approach. In the FW-UAV6DPose scenes we examined, accelerations reach
+  about **8 m/s^2** and the relative speed up to 24 m/s. This is why the gate still rejects 5-7 % of the measurements and the
+  filter re-initialises often. We **did not retune** the constants, to avoid tuning on the test data; a principled
+  alternative would be to fit them on scenes that are not used for the evaluation (Phase 7a uses the validation split only).
+- **Sensitivity to the assumed dt.** The dataset has no timestamps; dt = 0.1 s is an assumption. Before the fix the result
+  depended strongly on it (3.09 m at 0.1 s, 5.51 m at 0.05 s, 1.27 m at 0.2 s); after the fix the spread is small
+  (1.52, 1.84, 1.31 m) but not zero, and the true dt is unknown.
+- **Euler-angle singularities.** The attitude state uses ZYX Euler angles, which are discontinuous near +/-90 deg pitch. Several
+  scenes pass near it (`000011`: pitch to -89 deg, `000136`: to +89 deg with a 40 deg jump in the Euler angles between two
+  frames, `000125`) and `000136` still has 27 % of its measurements gated and the largest rotation error of the scenes. A
+  **quaternion-based filter** (a multiplicative extended Kalman filter on the rotation) is the natural fix and future work.
+- The re-initialisation threshold (3) was fixed in Phase 5b and is unchanged.

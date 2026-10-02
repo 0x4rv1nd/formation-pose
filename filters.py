@@ -437,16 +437,22 @@ class RangeKalmanFilter(KalmanFilter):
       1. R comes from the range-binned calibration (calibrate_pnp_noise_by_range), interpolated
          at the estimated range (the filter's predicted position at update time) instead of the
          Phase 5 rule "one covariance, position variances scaled with range^2".
-      2. After REINIT_AFTER consecutive gated measurements the attitude and the attitude rates are
-         re-initialised from the current PnP measurement (attitude = measurement, rates 0,
-         rate std W_MAX, attitude covariance = R). Position and velocity keep their estimates.
-         Steps without a measurement do not change the count. n_reinit counts the events.
+      2. After REINIT_AFTER consecutive gated measurements the filter is re-initialised from the
+         current PnP measurement. Steps without a measurement do not change the count. n_reinit counts
+         the events. reinit_mode selects what is reset:
+           "attitude" (Phase 5b): attitude = measurement, rates 0 with std W_MAX, attitude covariance = R;
+                      position and velocity keep their estimates.
+           "full" (Phase 7a-fix, default): the whole state as at the first measurement (position and attitude =
+                      measurement with covariance R, velocities and rates 0 with std V_INIT_MAX / W_MAX).
     """
 
-    def __init__(self, model, range_bins, reinit_after=REINIT_AFTER):
+    def __init__(self, model, range_bins, reinit_after=REINIT_AFTER, reinit_mode="full"):
+        if reinit_mode not in ("attitude", "full"):
+            raise ValueError(f"unknown reinit_mode {reinit_mode!r}")
         mid = np.array(range_bins[len(range_bins) // 2]["cov"])
         super().__init__(model, mid)
         self.range_bins = range_bins
+        self.reinit_mode = reinit_mode
         self.reinit_after = reinit_after
         self.n_reinit = 0
         self.consec_gated = 0
@@ -466,7 +472,10 @@ class RangeKalmanFilter(KalmanFilter):
         else:
             self.consec_gated += 1
             if self.consec_gated >= self.reinit_after:
-                self._reinit_attitude(z)
+                if self.reinit_mode == "full":
+                    self._set_from_measurement(z)
+                else:
+                    self._reinit_attitude(z)
                 self.n_reinit += 1
                 self.consec_gated = 0
         return used

@@ -5,6 +5,7 @@ import sys
 import numpy as np
 
 import classifier
+import config
 import filters
 import run_phase5
 import simulator
@@ -88,7 +89,7 @@ check("position std in the calibration grows with range", bins[-1]["std"][0] > b
 
 def run_tracking_reinit(seed, outage):
     """Like filters.run_filter, but also records the step index of each re-initialisation."""
-    kf = filters.RangeKalmanFilter(model, bins)
+    kf = filters.RangeKalmanFilter(model, bins, reinit_mode="attitude")
     rng = np.random.default_rng(seed)
     est, reinit_steps = np.empty((len(times), 6)), []
     for i, pose in enumerate(true):
@@ -124,6 +125,26 @@ check(f"(a) fixed KF re-initialises within {filters.REINIT_AFTER} steps after me
 check(f"(b) from the re-initialisation to t = 6 s the attitude error ({np.mean(att_rec):.2f} deg) is within 2x "
       f"its normal level over the same steps ({np.mean(att_rec_normal):.2f} deg)",
       len(att_rec) == 5 and np.mean(att_rec) <= 2 * np.mean(att_rec_normal))
+
+# --- Phase 7a-fix: full-state re-initialisation vs the Phase 5b attitude-only one ---------------------------
+z0 = np.array([-60.0, 20.0, 10.0, 5.0, 0.0, 0.0])
+z_far = z0 + np.array([200.0, 0.0, 0.0, 30.0, 0.0, 0.0])      # a measurement the filter cannot explain
+state = {}
+for mode in ("attitude", "full"):
+    kf = filters.RangeKalmanFilter(model, bins, reinit_mode=mode)
+    kf._set_from_measurement(z0)
+    for _ in range(filters.REINIT_AFTER):
+        kf.predict()
+        kf.update(z_far)
+    state[mode] = kf
+full, att = state["full"], state["attitude"]
+check("full re-init after 3 gated measurements: position and attitude = measurement, velocities and rates reset to 0",
+      full.n_reinit == 1 and np.allclose(full.x[[0, 1, 2, 6, 7, 8]], z_far) and np.allclose(full.x[[3, 4, 5, 9, 10, 11]], 0.0)
+      and np.allclose(full.P[3:6, 3:6], config.V_INIT_MAX ** 2 * np.eye(3)))
+check("attitude-only re-init (Phase 5b) still available: attitude reset, position kept",
+      att.n_reinit == 1 and np.allclose(att.x[6:9], z_far[3:]) and not np.allclose(att.x[:3], z_far[:3], atol=1.0))
+check("both re-initialised covariances stay symmetric positive definite",
+      all(np.allclose(k.P, k.P.T) and np.linalg.eigvalsh(k.P).min() > 0 for k in (full, att)))
 
 # --- improved particle filter weights --------------------------------------------------
 obs = [filters.make_observation(p, 0.0) for p in true[:3]]

@@ -34,7 +34,7 @@ CALIB_PATH = os.path.join(config.RESULTS_DIR, "kf_noise_calibration.json")
 
 
 def run_one(name, model, times, true, noise, R_ref, range_bins, seed, outage):
-    filt = filters.KalmanFilter(model, R_ref) if name == KF5 else filters.RangeKalmanFilter(model, range_bins)
+    filt = filters.KalmanFilter(model, R_ref) if name == KF5 else filters.RangeKalmanFilter(model, range_bins, reinit_mode="attitude")
     est, _ = filters.run_filter(times, true, filt, noise_px=noise, seed=seed, outage=outage)
     pos, att = p5.errors(true, est)
     n_meas = len(times) - 1 - filt.n_missing          # updates attempted after the initial one

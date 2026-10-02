@@ -105,7 +105,7 @@ def make_filter(name, model, noise, R_ref, range_bins, seed):
         return filters.ImprovedParticleFilter(model, 1000, filters.alpha_every_step(0.9), noise, R_ref, seed=seed)
     if name == KF5:
         return filters.KalmanFilter(model, R_ref)
-    return filters.RangeKalmanFilter(model, range_bins)
+    return filters.RangeKalmanFilter(model, range_bins, reinit_mode="attitude")
 
 
 def ms(values):

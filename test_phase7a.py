@@ -85,5 +85,15 @@ for noise in (0.0, 2.0):
         ok &= bool(np.isfinite(r["kf_pos"]).all() and np.isfinite(r["kf_rot"]).all() and np.isfinite(r["kf_est"]).all())
     check(f"no NaN in the Kalman results of any frame ({noise:g} px, all 24 scenes)", ok)
 
+# --- Phase 7a-fix: the full-state re-initialisation removes the gate lock-out of scene 000096 --------------
+calib = meth.calibrate_range_noise(2.0, K, n=1500)["bins"]
+rates = {}
+for mode in ("attitude", "full"):
+    r = ev.run_scene(cache["000096"], "000096", 2.0, 0, calib, reinit_mode=mode)
+    rates[mode] = (100 * r["gated"] / r["offered"], np.nanmean(r["kf_pos"]))
+check(f"scene 000096 at 2 px: attitude-only re-init locks out ({rates['attitude'][0]:.0f} % gated, {rates['attitude'][1]:.1f} m), "
+      f"full re-init does not ({rates['full'][0]:.0f} % gated, {rates['full'][1]:.1f} m)",
+      rates["attitude"][0] > 50 and rates["full"][0] < 20 and rates["full"][1] < rates["attitude"][1])
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)
