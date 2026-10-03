@@ -82,5 +82,34 @@ src = "\n".join("".join(c["source"]) for c in nb["cells"])
 check("notebook: GPU check, Drive checkpoints and resume, imgsz=1280, epochs=100, patience=20, pose validation",
       all(s in src for s in ("cuda.is_available", "resume=True", "imgsz=1280", "epochs=100", "patience=20", "drive.mount", "pose.map50")))
 
+
+# ---- part B: image-based evaluation (needs phase7b_tune_val.py, phase7b_detect.py and phase7b_evaluate.py to have been run) ----
+OUT = os.path.join("results", "phase7b")
+if os.path.exists(os.path.join(OUT, "test_results.json")):
+    def finite(x):
+        if isinstance(x, dict):
+            return all(finite(v) for v in x.values())
+        if isinstance(x, list):
+            return all(finite(v) for v in x)
+        return not (isinstance(x, float) and not np.isfinite(x))
+
+    choices = json.load(open(os.path.join(OUT, "val_choices.json")))
+    test_res = json.load(open(os.path.join(OUT, "test_results.json")))
+    val_res = json.load(open(os.path.join(OUT, "val_results.json")))
+    pred = np.load(os.path.join(io.DATA_DIR, "pred_test.npz"))
+    pred_scenes = {k.split("/")[0] for k in pred.files}
+    check("evaluation uses only the test scenes of fw_uav_split.json (results and cached predictions)",
+          set(test_res["scenes"]) == test and pred_scenes == test and not (set(test_res["scenes"]) & (train | val)))
+    check("the choices come from the saved val-tuned config: made on the val scenes, each value inside its grid, and saved before the test predictions",
+          set(choices["scenes_used"]) == val and choices["box_threshold"] in choices["grids"]["box"]
+          and choices["keypoint_conf_threshold"] in choices["grids"]["keypoint_conf"]
+          and choices["ransac_reproj_px"] in choices["grids"]["ransac_px"]
+          and choices["kalman_calibration_noise_px"] in choices["grids"]["kalman_noise_px"]
+          and os.path.getmtime(os.path.join(OUT, "val_choices.json")) <= os.path.getmtime(os.path.join(io.DATA_DIR, "pred_test.npz")))
+    check("val and test result files contain no NaN or inf", finite(test_res) and finite(val_res))
+    check("every method reports all 400 frames per split and the Kalman filter has an estimate in every frame",
+          all(m["all"]["n_frames"] == 400 for r in (test_res, val_res) for m in r["methods"].values())
+          and test_res["methods"]["kalman"]["all"]["no_solution_pct"] == 0.0)
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)

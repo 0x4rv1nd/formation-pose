@@ -1000,19 +1000,27 @@ within 0.03 deg. Full numbers: `results/phase7a_fix/synthetic_comparison.json`.
   **quaternion-based filter** (a multiplicative extended Kalman filter on the rotation) is the natural fix and future work.
 - The re-initialisation threshold (3) was fixed in Phase 5b and is unchanged.
 
-## Phase 7b (in progress): YOLO-pose keypoint detector for the FW-UAV images
+## Phase 7b: YOLO-pose keypoint detector and image-based evaluation
 
 Phase 7a used the true keypoint projections plus Gaussian noise. Phase 7b replaces them with a **learned detector** on the
-real images. **Part A (this section)** prepares the data and the training notebook; training runs on Google Colab; part B
-(evaluation of the detector's keypoints through PnP and the Kalman filter on the test scenes) comes after.
+real images. **Part A** prepares the data and the training notebook (training ran on Google Colab); **part B** (the last
+subsection, "Phase 7b: image-based evaluation") evaluates the detector and the full image -> pose pipeline on the test scenes.
+**Result in one line: the pipeline is not usable with this detector** (70 % of test frames fail); the limits are the detector's
+generalisation to new orientations and the precision of its keypoints, not the pose estimation itself.
 
 | File | Purpose |
 |------|---------|
 | `fw_uav_split.json` | The scene split (train / val / test) and the reasoning behind it |
 | `phase7b_prepare.py` | Builds the YOLO-pose dataset, the zip and the label-check figures |
 | `notebooks/train_yolo_pose_colab.ipynb` | Colab notebook: Drive, GPU check, training with resume, validation metrics |
+| `models/fw_uav_yolo_pose.pt` | The trained detector (YOLO11n-pose, 6 MB) |
+| `phase7b_detect.py` | Part B: runs the detector on the val or test scenes and caches the raw predictions in `data/fw_uav/` |
+| `phase7b_eval.py` | Part B: library (ground truth, keypoint diagnostics, OKS, PnP / RANSAC / symmetry-aware PnP, Kalman wrapper) |
+| `phase7b_tune_val.py` | Part B: every threshold and method choice, made on the val scenes only -> `results/phase7b/val_choices.json` |
+| `phase7b_evaluate.py` | Part B: reads `val_choices.json`, evaluates the test scenes once, writes the results JSON and figures |
 | `test_phase7b.py` | Sanity checks (prints PASS/FAIL) |
 | `results/phase7b/label_check_*.png`, `dataset_summary.json` | Label drawings and the dataset summary |
+| `results/phase7b/val_*.json`, `test_*.json`, `test_*.png` | Part B results and figures |
 
 ```bash
 .venv/bin/python phase7b_prepare.py     # about 1 min: data/fw_uav/yolo_fw_uav/ and yolo_fw_uav.zip (data/ is not in git)
@@ -1077,9 +1085,192 @@ flipped labels would carry up to about 5 px of error; `flip_idx` stays in `data.
 the training cell resumes from `last.pt` after a disconnect. The notebook ends by printing the validation box and pose mAP.
 The notebook itself has not been run on a GPU yet.
 
-### Next (part B)
+### Phase 7b: image-based evaluation
 
-Run the trained detector on the test scenes, feed its keypoints (with their confidences as the visibility) to SQPnP and the
-Kalman filter, and compare with the Phase 7a results that used ideal keypoints plus Gaussian noise. No test scene has been
-used for anything yet.
+**Training.** YOLO11n-pose, `imgsz=1280`, no horizontal flip, on the 16 training scenes (1,600 images), early stopping on the 4 val
+scenes: 69 epochs (the patience of 20 stopped it; the best epoch was 49), 2.1 h on a Colab T4. On the val scenes the best model
+reaches **box mAP50 0.973 / mAP50-95 0.819** but **pose mAP50 only 0.141 / mAP50-95 0.111**. Validation pose mAP barely improved
+during training while the training pose loss kept falling, i.e. the model fits the training scenes but does not generalise to
+the val scenes. Re-evaluating the saved weights on the Mac (MPS) reproduces the numbers (0.973 / 0.822 / 0.141 / 0.112).
 
+**Protocol.** The detector (`imgsz=1280`, each frame JPEG-encoded at quality 95 like the training images) ran on the val and the
+test scenes (400 frames each). Every threshold and method choice was made on the **val scenes only** (`phase7b_tune_val.py`,
+saved in `results/phase7b/val_choices.json`); the test scenes were then run once (`phase7b_evaluate.py`) with no pipeline
+change. Choices (rule: lowest failure rate, ties within 0.5 points by mean translation error): box confidence 0.1, keypoint
+confidence 0.98, RANSAC reprojection threshold 32 px, best single-frame method symmetry-aware RANSAC, Kalman R calibrated at
+10 px (Phase 7a-fix filter, full re-initialisation). **These choices are close to arbitrary**: on val all four single-frame
+methods fail on the same 87.25 % of frames, so the selection could not tell them apart. A frame "fails" (as in Phase 7a) if there
+is no solution, the position error exceeds 10 % of the range or the rotation error exceeds 20 degrees. Ground truth is the model
+keypoints projected with the true pose (visible = inside the mask dilated by 2 px).
+
+```bash
+.venv/bin/python phase7b_detect.py --split val && .venv/bin/python phase7b_tune_val.py
+.venv/bin/python phase7b_detect.py --split test && .venv/bin/python phase7b_evaluate.py
+```
+
+#### Keypoint diagnostics
+
+| | Val (000042-000045) | Test (000029, 000030, 000136, 000137) |
+|---|---|---|
+| Detection rate (box conf >= 0.1) | 100 % | 100 % |
+| Median box IoU | 0.92 | 0.93 |
+| Keypoint error, median / 90th percentile | 53 / 123 px | 16 / 132 px |
+| by distance 150-250 / 250-350 / 350-450 m (median) | 45 / 56 / 77 px | 9 / 65 / 12 px |
+| Left/right swap rate | 37.6 % | 43.4 % |
+| Leading/trailing swap rate | 45.9 % | 32.8 % |
+| Frames with a majority of left/right swaps | 33.5 % | 56.2 % |
+| Mean OKS (Ultralytics definition) | 0.26 | 0.49 |
+| Frames with OKS > 0.5 | 19 % | 44 % |
+| ... with an oracle that undoes the best whole-aircraft mirror | 19 % | 50 % |
+| ... with an oracle that fixes every left/right pair | 19 % | 50 % |
+| ... with an oracle that fixes every leading/trailing pair | 19 % | 44 % |
+
+The box is very good (the median label box is 186 x 78 px on val). The keypoints are not: the error is **bimodal by scene**.
+
+| Scene | Range [m] | Keypoint error median / p90 [px] | Frames OKS > 0.5 | L/R swap rate | Nearest-training-pose distance, median (max) |
+|---|---|---|---|---|---|
+| val 000042 | 241-254 | 8 / 82 | 77 % | 10 % | 15 (23) deg |
+| val 000043 | 310-381 | 54 / 117 | 0 % | 45 % | 35 (41) deg |
+| val 000044 | 241-290 | 80 / 161 | 0 % | 72 % | 20 (28) deg |
+| val 000045 | 244-247 | 64 / 114 | 0 % | 25 % | 19 (22) deg |
+| test 000029 | 280-350 | 84 / 159 | 0 % | 70 % | 17 (23) deg |
+| test 000030 | 175-234 | 9 / 20 | 100 % | 8 % | 18 (22) deg |
+| test 000136 | 344-443 | 10 / 50 | 75 % | 25 % | 6 (17) deg |
+| test 000137 | 343-357 | 21 / 78 | 0 % | 90 % | 19 (23) deg |
+
+(The nearest-training-pose distance is the geodesic angle between a frame's true object rotation in the camera frame and the
+closest rotation among the 1,600 training frames. Per-keypoint, per-distance and per-confidence numbers are in
+`val_results.json` and `test_results.json`.)
+
+**Keypoint confidence is almost useless**: every confidence is above 0.94 (median 0.99). Only the top bin (>= 0.995) is clearly
+better on val (median 16 px against 56-80 px below it) and it holds 19 % of the keypoints; on test the trend is reversed
+(32 px for >= 0.995, 13-14 px for 0.97-0.99). A confidence threshold therefore cannot separate good keypoints from bad ones.
+
+![overlays](results/phase7b/test_overlays.png)
+
+![keypoint error](results/phase7b/test_keypoint_error_hist.png)
+
+![swap rate](results/phase7b/test_swap_rate_by_keypoint.png)
+
+#### Why is the pose mAP low?
+
+1. **Not swaps or leading/trailing confusion.** Raw swap rates look high (37-43 %), but they are inflated: when the keypoints are
+   scattered 50-80 px from the truth, a point is often closer to the partner's true location by chance (50 % is chance level).
+   The decisive test is the oracle: undoing every left/right swap leaves the fraction of val frames with OKS > 0.5 at 19 %
+   (mean OKS 0.26 -> 0.31) and raises it from 44 % to 50 % on test; fixing leading/trailing confusion changes nothing
+   (19 % -> 19 %, 44 % -> 44 %). Swaps explain at most a few points of the gap. Test scene 000029 has a 70 % swap rate, but
+   mirroring its keypoints still leaves 1 % of its frames above OKS 0.5: its keypoints are wrong, not just mislabelled.
+   The symmetry-aware PnP also does not help (below).
+2. **Not mainly the OKS metric.** OKS is strict for this object (with Ultralytics' default sigma of 1/13, OKS 0.5 needs about
+   21-24 px of error on the median box and OKS 0.75 about 14-15 px), but the good scenes pass it easily: test scene 000030
+   (median error 9 px) has OKS > 0.5 on 100 % of its frames and 000136 on 75 %. The scenes that fail are 50-85 px off, a
+   factor 2-4 beyond any reasonable tolerance.
+3. **General imprecision that depends on the scene, i.e. poor generalisation.** The detector's keypoints in the failing scenes
+   are not a few pixels off: in val scene 000043 the true wingtips are 190 px apart and the predicted ones about 120 px (they are
+   pulled towards the fuselage, as if regressing towards an average pose). Training pose loss fell while validation pose mAP stayed flat,
+   which points the same way. The training set is only 16 trajectories (1,600 strongly correlated frames), so the orientations
+   and positions of an unseen scene are mostly new to the model.
+
+**How strong is the evidence for "unseen orientations"?** It is consistent but not proven. The nearest-training-pose distance
+agrees with the outcome at the extremes (test 000136 at 6 degrees works, val 000043 at 35 degrees is the worst keypoint scene, val 000042 at 15 degrees works), but within
+15-20 degrees it does not separate the scenes: test 000030 (18 degrees) works while test 000029 (17 degrees) and val
+000044 / 000045 (19-20 degrees) fail. The distance measures orientation only, not image position, scale, background or how
+the aircraft is seen against it, so other differences between scenes matter too. Pinning this down needs an experiment
+(for example training with held-out orientation ranges), which was outside this phase.
+
+#### Pose methods on the detected keypoints (test scenes, 400 frames)
+
+| Method | Failure % | Translation mean / median [m] | Rotation mean / median [deg] | No solution % |
+|---|---|---|---|---|
+| (a) SQPnP, keypoints with conf >= 0.98 | 70.0 | 38.8 / 18.0 | 63.4 / 45.1 | 0.5 |
+| (b) RANSAC PnP (32 px) | 71.2 | 38.9 / 18.0 | 64.9 / 45.3 | 0.5 |
+| (c) symmetry-aware SQPnP | 70.8 | 38.7 / 18.0 | 64.5 / 45.2 | 0.5 |
+| (c) symmetry-aware RANSAC (chosen on val as best) | 71.2 | 38.9 / 18.0 | 64.9 / 45.3 | 0.5 |
+| (d) Kalman filter on (c) symmetry-aware RANSAC | 71.0 | 36.0 / 15.5 | 65.8 / 45.2 | 0.0 |
+
+The Kalman filter gated 10.9 % of the measurements it was offered and re-initialised 7 times. On val the same table reads 87.2 /
+87.2 / 87.2 / 87.2 / 89.0 % failures with 102-108 m median translation error, so no method is separable from another on either set.
+
+By distance (test; frames per bin 100 / 153 / 147; the 450+ m bin is empty because the test scenes end at 443 m):
+
+| Bin | (a) SQPnP: fail %, translation median [m], rotation median [deg] | (d) Kalman: fail %, translation median, rotation median |
+|---|---|---|
+| 150-250 m | 50 %, 21.8 m, 8 deg | 55 %, 21.0 m, 8 deg |
+| 250-350 m | 100 %, 22.7 m, 142 deg | 100 %, 11.5 m, 147 deg |
+| 350-450 m | 52 %, 11.2 m, 15 deg | 52 %, 12.9 m, 46 deg |
+
+The distance trend is confounded by the scenes (the 250-350 m bin contains the failing scene 000029 and most of 000137); it is not
+a range effect. Per scene (SQPnP / Kalman failure %, SQPnP translation median, rotation median): 000029 100 / 100 %, 30.9 m, 151 deg;
+000030 50 / 55 %, 21.8 m, 8 deg; 000136 30 / 29 %, 20.2 m, 12 deg; 000137 100 / 100 %, 10.6 m, 46 deg
+(its translation is small but the rotation is wrong, so every frame fails).
+
+![error vs distance](results/phase7b/test_error_vs_distance.png)
+
+![sequence 000029](results/phase7b/test_sequence_000029.png)
+
+(Sequence figure: test scene 000029, chosen in advance as the middle-range scene. The estimate is stable but biased: the
+roll/pitch/yaw solution is a consistent wrong orientation, and the Kalman filter smooths the noise without correcting the bias.)
+
+#### Comparison with Phase 7a (same test scenes, ideal keypoints plus Gaussian noise, 5 seeds)
+
+| Keypoints | PnP fail % | PnP translation mean / median [m] | PnP rotation mean / median [deg] | Kalman fail % | Kalman translation mean / median [m] | Kalman rotation mean / median [deg] |
+|---|---|---|---|---|---|---|
+| projected, 0 px | 0.0 | 0.00 / 0.00 | 0.0 / 0.0 | 0.0 | 0.31 / 0.21 | 0.1 / 0.0 |
+| + 1 px | 0.0 | 1.43 / 1.07 | 0.5 / 0.5 | 0.0 | 0.82 / 0.55 | 0.4 / 0.3 |
+| + 2 px | 0.3 | 2.94 / 2.21 | 1.4 / 0.9 | 0.1 | 1.47 / 1.04 | 0.9 / 0.5 |
+| + 5 px | 4.0 | 8.01 / 6.09 | 8.1 / 2.4 | 1.6 | 4.40 / 3.71 | 3.8 / 1.2 |
+| + 10 px (extra) | 27.0 | 19.74 / 16.01 | 23.6 / 5.0 | 8.3 | 16.96 / 15.93 | 10.4 / 2.4 |
+| **YOLO-pose detector** | **70.0** | **38.8 / 18.0** | **63.4 / 45.1** | **71.0** | **36.0 / 15.5** | **65.8 / 45.2** |
+
+**Effective noise.** Matching the detector's PnP result to PnP on projected keypoints with Gaussian noise (on the same test
+scenes): the **median translation error corresponds to about 10.5 px**, the **failure rate to about 17 px**, but the **median
+rotation error (45 degrees) corresponds to more than 60 px** (the largest noise level tried), and the median keypoint error (16 px)
+corresponds to sigma = 14 px. So there is no single effective noise: the translation looks like 10-17 px of noise, the rotation
+like far more. The reason is that the detector's errors are not independent noise: they are structured (a whole wing pulled in, a consistent
+wrong orientation), which a Gaussian model with the same pixel size under-represents. On val the detector corresponds to
+about 39 px (translation median) and more than 60 px (rotation median).
+
+#### Is the image -> pose pipeline usable?
+
+**No, not with this detector.** On the test scenes 70 % of the frames fail, the rotation error has a median of 45 degrees (mean
+63 degrees) and only the near scene 000030 and the far scene 000136 give plausible rotations (8-13 degrees median). Even there
+30-50 % of the frames fail the 10 %-of-range translation criterion, with a median translation error of 20-22 m at 175-440 m.
+Phase 7a shows why: PnP on these 13 nearly coplanar keypoints at 175-440 m already needs the keypoints to be accurate to
+about 5 px or better (5 px of Gaussian noise gives 6 m and 2 degrees median), and the detector reaches that only in part of two scenes.
+
+What limits it, in order of importance:
+1. **The detector's generalisation to new scenes** (training data): half of the scenes have 50-85 px keypoint errors; the
+   hardest part is the wingtips, whose median error is 63-81 px on test.
+2. **Keypoint precision even where the detector works**: 9-10 px median error still gives 22 m translation errors and 35-50 %
+   failures. Real errors are biased and correlated, which PnP and the filter cannot average out.
+3. **No usable confidence signal**, so neither a threshold nor RANSAC can remove the bad keypoints (all RANSAC and
+   symmetry-aware variants are within 1.2 points of plain SQPnP; with most keypoints wrong, there is no consensus set to find).
+4. **The filter cannot repair a biased measurement**: it lowers the mean translation error from 38.8 to 36.0 m but leaves the
+   failure rate and the 45 degree median rotation error unchanged.
+
+PnP and the Kalman filter themselves behave as in Phase 7a: with accurate keypoints they give metre-level poses. **The pipeline
+is limited by the detector, and by two separate things:**
+- **Generalisation to new orientations (and scenes):** about half of the scenes have 50-85 px keypoint errors. This is the
+  larger limit and a matter of training data.
+- **Keypoint precision:** even where the detector generalises, its errors are systematic rather than random. A real median error of 9-10 px
+  (scenes 000030 and 000136) still gives about 22 m translation errors and 30-50 % failures, which is worse than 10 px of
+  independent Gaussian noise gives on the same scenes (16 m median, 27 % failures). More data alone may not fix this; the
+  keypoints must also become more precise and less biased.
+
+#### Limitations
+
+- Only 4 test scenes (400 strongly correlated frames); the per-scene numbers are better evidence than the pooled ones. The test
+  set reaches 443 m, so beyond 450 m nothing is tested.
+- The detector was trained on 16 scenes only (the 24 scenes of the dataset's validation split); the larger training split was not used.
+- The choices made on val are close to arbitrary because every method fails there. The Kalman R was calibrated on synthetic
+  noise (10 px), which does not describe the detector's structured errors.
+- The nearest-training-pose distance is a single, coarse explanation variable (see above).
+- dt = 0.1 s is assumed (no timestamps), as in Phase 7a.
+
+#### Future work
+
+- **More training data:** train on the full training split of FW-UAV6DPose (7,725 images, `training.zip`) instead of 1,600 frames,
+  and add pose-diverse data or augmentation (rotation, scale, synthetic renderings of the 3D model at new orientations).
+- **Higher-precision keypoints:** a crop-based two-stage detector (the box is already accurate, median IoU 0.93, so a second network
+  can regress the keypoints from a high-resolution crop of the aircraft) and a larger model than YOLO11n-pose.
+- Quantify the orientation hypothesis with a held-out-orientation experiment, and use a keypoint-uncertainty output so that the filter can weight measurements.

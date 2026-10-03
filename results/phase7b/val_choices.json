@@ -1,0 +1,42 @@
+{
+ "scenes_used": [
+  "000042",
+  "000043",
+  "000044",
+  "000045"
+ ],
+ "box_threshold": 0.1,
+ "keypoint_conf_threshold": 0.98,
+ "ransac_reproj_px": 32.0,
+ "best_single_frame_method": "c_ransac_sym",
+ "kalman_calibration_noise_px": 10.0,
+ "selection_rule": "lowest failure rate, ties within 0.5 points by mean translation error; box threshold: highest losing < 0.5 % correct boxes",
+ "grids": {
+  "box": [
+   0.1,
+   0.25,
+   0.5,
+   0.7
+  ],
+  "keypoint_conf": [
+   0.0,
+   0.95,
+   0.98,
+   0.99,
+   0.995
+  ],
+  "ransac_px": [
+   4.0,
+   8.0,
+   16.0,
+   32.0,
+   64.0
+  ],
+  "kalman_noise_px": [
+   5.0,
+   10.0,
+   20.0,
+   40.0
+  ]
+ }
+}

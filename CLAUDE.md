@@ -9,3 +9,5 @@
 - Commit first, then `git pull --rebase origin main`, then show `git log --format=fuller -1`, then push.
 - Never force-push. Never stage `data/`, `.venv/` or anything covered by `.gitignore`.
 - Use `.venv/bin/python` to run scripts.
+- Never run `git checkout`, `git reset`, `git restore`, `git stash`, `git clean` or anything else that discards my uncommitted
+  changes without asking me first.
