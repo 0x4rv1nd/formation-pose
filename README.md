@@ -1,16 +1,99 @@
 # formation-pose
 
-A student reproduction of **"Vision-Based Precision Pose Estimation for Autonomous
-Formation Flying"** (Punnoose, Stanford).
+Vision-based relative pose estimation for formation flight: a follower aircraft with a gimballed camera estimates the pose
+(position and attitude) of a leader aircraft from the pixel locations of keypoints on it. This repository reproduces
+**"Vision-Based Precision Pose Estimation for Autonomous Formation Flying" (Punnoose, Stanford)**, which combines a pose
+classifier with a particle filter, and finds that its particle filter does not refine the classifier's coarse estimate: it
+draws its particles from the classifier's own 5-7 m errors, so no weighting can pull the estimate below that error. Our
+improvement replaces it with geometry and a filter: **PnP on the keypoints plus a range-calibrated Kalman filter** reduces the
+2 px position error from 6.35 m to 0.43 m in simulation. On the real poses, camera and 3D model of the FW-UAV6DPose dataset
+the same pipeline works with ideal keypoints (1.52 m and 0.76 degrees at 164-518 m with 2 px noise), but a YOLO-pose keypoint
+detector trained on only 16 flight sequences is the remaining bottleneck, for both generalisation to new orientations and keypoint precision
+(70 % of test frames fail).
 
-A follower aircraft carries a gimballed camera that always points at a leader aircraft.
-The goal is to estimate the leader's relative pose (position + attitude) from the pixel
-locations of 14 keypoints on the leader. Like the paper, we assume a perfect keypoint
-detector and use purely synthetic data.
+## Main results
 
-The project is built in 6 phases; this repository currently contains Phases 1 to 4b.
+**Synthetic approach trajectory, 2 px keypoint noise** (101 steps, 5 seeds; mean ± std over seeds of the time-averaged error;
+simulated ideal-detector keypoints with Gaussian pixel noise; runtime includes the classifier / PnP calls). Source:
+`results/final/final_table.md`, produced by `evaluate.py`.
 
-## Setup
+| Method | Position mean [m] | Position median [m] | Attitude mean [deg] | Attitude median [deg] | ms/step |
+|---|---|---|---|---|---|
+| Classifier only | 7.26 ± 0.11 | 7.49 | 5.24 ± 0.12 | 4.98 | 0.05 |
+| Paper's particle filter (Config B, 5000 particles) | 6.35 ± 1.03 | 6.07 | 6.20 ± 0.20 | 5.64 | 8.53 |
+| PnP only (SQPnP) | 0.89 ± 0.05 | 0.64 | 1.50 ± 0.08 | 1.45 | 0.09 |
+| Classifier + PnP | 0.87 ± 0.04 | 0.63 | 1.49 ± 0.08 | 1.44 | 0.22 |
+| Range-calibrated Kalman filter | **0.43 ± 0.05** | **0.30** | 1.53 ± 0.06 | 1.50 | 0.35 |
+
+![error vs noise](results/final/fig_noise_sweep.png)
+
+**Real data: the same test scenes with ideal and with detected keypoints** (FW-UAV6DPose test scenes 000029, 000030, 000136,
+000137; 400 frames at 175-443 m). A frame fails if there is no solution, the position error exceeds 10 % of the range or the
+rotation error exceeds 20 degrees. Phase 7a projects the true keypoints with the true pose and adds 2 px Gaussian noise (mean over 5 seeds);
+Phase 7b uses the keypoints that the trained YOLO-pose detector finds in the images. In Phase 7b the Kalman filter
+filtered the symmetry-aware RANSAC measurements chosen on the validation scenes.
+
+| Keypoints | Method | Failure % | Translation mean / median [m] | Rotation mean / median [deg] | Kalman gate rejection |
+|---|---|---|---|---|---|
+| Phase 7a: projected true keypoints + 2 px noise | PnP only (SQPnP) | 0.3 | 2.94 / 2.21 | 1.4 / 0.9 | - |
+|  | Range-calibrated Kalman filter (full-state re-initialisation, Phase 7a-fix) | 0.1 | 1.47 / 1.04 | 0.9 / 0.5 | 7.0 % |
+| Phase 7b: YOLO-pose detected keypoints | PnP only (SQPnP) | 70.0 | 38.82 / 18.03 | 63.4 / 45.1 | - |
+|  | Range-calibrated Kalman filter (full-state re-initialisation, Phase 7a-fix) | 71.0 | 36.02 / 15.50 | 65.8 / 45.2 | 10.9 % |
+
+## Key findings
+
+- **The paper's particle filter does not refine the classifier.** At 2 px it reaches 6.35 m / 6.20 deg against 7.26 m / 5.24 deg
+  for the classifier alone. An ablation shows why: particles drawn from the classifier and its error samples are 5-7 m off
+  (7.80 m at 2 px even with N = 1000), while particles drawn from the PnP pose reach 2.15 m with the original likelihood and 1.18 m with a Gaussian one.
+- **Most of the gain is geometry, not filtering.** PnP alone gives 0.89 m / 1.50 deg at 2 px and 2.76 m / 4.35 deg at 5 px,
+  against 7.26 m / 5.24 deg for the classifier.
+- **The classifier adds little as an initial guess.** Classifier + PnP ties SQPnP at 2 px (0.87 vs 0.89 m) and helps at
+  5 px (2.17 vs 2.76 m). Trained with dropout it lowers gross failures with only 4-6 visible keypoints from 2.8 % to 0.8 % (2 px).
+- **The range-calibrated Kalman filter halves the position error** (0.43 m at 2 px, 1.03 m at 5 px), cuts the gate rejection
+  from 2.4 % to 0.4 % and brings the attitude error in the second after a 1 s outage from 35.1 to 6.2 deg. It does not improve the attitude (1.53 vs 1.49 deg for PnP at 2 px).
+- **On real UAV poses with ideal keypoints it works at 164-518 m.** On all 2400 frames at 2 px, PnP gives 2.59 m / 1.36 deg and the Kalman filter 1.52 m / 0.76 deg, better
+  than PnP in translation in 22 of 24 scenes. This needed the full-state re-initialisation: before it, the gate locked out
+  in scene `000096` (82 % of its measurements gated, 29.59 m).
+- **The detector finds the aircraft but not its keypoints reliably.** Validation box mAP50 is 0.973 but pose mAP50 only 0.141.
+  On the test scenes the median keypoint error is 16 px (90th percentile 132 px) and bimodal by scene: 9-10 px in
+  `000030` and `000136`, 84 px in `000029`.
+- **The image -> pose pipeline fails on 70 % of test frames** (median rotation error 45 deg, against 0.3 % failures for projected
+  keypoints with 2 px noise). The low pose mAP is not caused by left/right swaps (an oracle that fixes them moves the frames
+  with OKS > 0.5 only from 44 % to 50 %) or by the strict OKS metric.
+- **Two limits, in the detector:** generalisation to new orientations (consistent with the data, not proven) and keypoint
+  precision. The errors are systematic: a real 9-10 px error behaves worse than 10 px of synthetic noise (about 22 m and
+  30-50 % failures against 16 m and 27 %).
+
+## Pipeline overview
+
+```
+image  ->  keypoints  ->  classifier  ->  PnP  ->  Kalman filter  ->  relative pose
+```
+
+| Stage | What it is here | Phases 1-6 (synthetic) | FW-UAV6DPose (real data) |
+|---|---|---|---|
+| Image | Camera frame | **Simulated**: no images, keypoints are projected from sampled poses | **Real images**, used only in Phase 7b |
+| Keypoints | 14 (F-16-like) or 13 (UAV) pixel locations with visibility | **Simulated**: ideal projection plus Gaussian noise (0-5 px) and a simple occlusion model | Phase 7a: projected from the true poses (**real-data test**, ideal detector); Phase 7b: **learned** (YOLO11n-pose) |
+| Classifier | MLP, 45 -> 100 -> 100 -> 4800 grid cells (Phase 2; dropout version Phase 4b) | **Learned** on simulated data; coarse pose and PnP initial guess | Not used (it would need a pose grid over the whole of SO(3)) |
+| PnP | SQPnP on the visible keypoints (Phase 4) | Tested in simulation | Tested on real poses (7a) and on detected keypoints (7b, also RANSAC and symmetry-aware variants) |
+| Kalman filter | 12-state constant-velocity filter, R calibrated by range, re-initialisation (Phases 5, 5b) | Tested in simulation | Tested on real poses (7a, full-state re-initialisation 7a-fix) and on detected keypoints (7b) |
+
+Where each phase fits:
+
+| Phase | Content |
+|---|---|
+| 1 | Simulation, geometry and dataset generation |
+| 2 | Pose classifier (the paper's, 4800 grid cells) |
+| 3 | The paper's baseline particle filter |
+| 4, 4b | PnP refinement; hybrid PnP and keypoint dropout |
+| 5, 5b | Kalman filter and improved particle filter; range-calibrated noise and re-initialisation |
+| 6 | Final evaluation of all methods in one setting (`evaluate.py`, `results/final/`) |
+| 7a, 7a-fix | Evaluation on the real poses of FW-UAV6DPose with projected keypoints; full-state filter re-initialisation |
+| 7b | YOLO-pose keypoint detector on the real images and the image-based evaluation |
+
+## How to run
+
+**Install** (`requirements.txt` pins numpy, scipy, opencv-python, matplotlib, torch and ultralytics; ultralytics is needed only for Phase 7b):
 
 ```bash
 python3 -m venv .venv
@@ -18,7 +101,168 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Phase 1: simulation and dataset generation
+**Simulation, Phases 1-6** (no external data):
+
+```bash
+./run_all.sh      # generates the data, trains both classifiers, runs every phase and the final evaluation (results/final/), then the tests
+./run_tests.sh    # only the sanity checks (test_phase1-5; test_phase7a / 7b are added when their data is present)
+```
+
+`run_all.sh` overwrites `data/`, `models/` and `results/` and takes several minutes on a laptop CPU. The scripts of the
+single phases can also be run one at a time (for example `.venv/bin/python run_phase5.py`); each section of the development log lists its commands.
+
+**Optional: the FW-UAV6DPose experiments (Phases 7a, 7a-fix, 7b).** They need the FW-UAV6DPose dataset of
+Liu et al. (reference 3), which is not in git (`data/` is ignored). Download it from the link in footnote 1 of the MF-UAVPose6D paper:
+<https://1drv.ms/f/c/29da00c199018e43/IgDeb1nx1EPVTpUCrTQETU04AdkbyH2DbYoCyVI7EHKDHEw?e=cZjeZT>.
+We used only two parts of it: `val.zip` (the validation split, BOP format: rgb, masks and JSON files of 24 scenes), which goes to
+`data/fw_uav/val.zip`, and the `models` folder (the 3D model, a single `.OBJ` file), which goes to `data/fw_uav/models/`. Folder layout:
+
+```
+data/fw_uav/val.zip                                   the validation split (rgb/, mask_visib/ and the JSON files of 24 scenes)
+data/fw_uav/val_meta/val/<scene>/scene_gt.json        the three JSON files per scene (also inside val.zip)
+                                 scene_camera.json
+                                 scene_gt_info.json
+data/fw_uav/models/D0108-C20821-FixedWings-Merge.OBJ  the UAV 3D model
+```
+
+The scripts create the rest in `data/fw_uav/` (mask and keypoint caches, the YOLO dataset and its zip, the cached detector predictions).
+
+```bash
+# Phase 7a and 7a-fix: ideal keypoints from the true poses
+.venv/bin/python phase7a_model_check.py
+.venv/bin/python phase7a_keypoints.py
+.venv/bin/python phase7a_evaluate.py --reinit attitude   # before the fix -> results/phase7a/
+.venv/bin/python phase7a_evaluate.py                     # full-state re-initialisation -> results/phase7a_fix/
+.venv/bin/python phase7a_fix_report.py
+.venv/bin/python run_phase7a_fix_synthetic.py
+.venv/bin/python test_phase7a.py
+
+# Phase 7b, part A: YOLO-pose dataset, then train on Colab
+.venv/bin/python phase7b_prepare.py        # data/fw_uav/yolo_fw_uav/ and yolo_fw_uav.zip
+# upload yolo_fw_uav.zip to Google Drive (MyDrive/formation-pose/), open notebooks/train_yolo_pose_colab.ipynb
+# on a T4 GPU (the run took 2.1 h), and save the best weights as models/fw_uav_yolo_pose.pt (included in this repository)
+
+# Phase 7b, part B: choices on the validation scenes, then the test scenes once
+.venv/bin/python phase7b_detect.py --split val
+.venv/bin/python phase7b_tune_val.py       # -> results/phase7b/val_choices.json
+.venv/bin/python phase7b_detect.py --split test
+.venv/bin/python phase7b_evaluate.py
+.venv/bin/python test_phase7b.py
+```
+
+## Project structure
+
+Code and configuration:
+
+| File | Purpose |
+|---|---|
+| `config.py` | Conventions, camera intrinsics, keypoints, occlusion shapes, label grid, filter constants |
+| `geometry.py` | Pose -> camera transform, pinhole projection, occlusion (the only pose-to-pixel code) |
+| `simulator.py` | Random pose sampling and the approach trajectory |
+| `dataset.py` | Features, labels, dataset generation CLI, sample plot |
+| `classifier.py` | The pose classifier: model, training, evaluation and prediction API |
+| `train_dropout.py` | Trains the keypoint-dropout classifier (`models/classifier_dropout.pt`) |
+| `pnp.py` | PnP only, classifier + PnP, hybrid PnP |
+| `filters.py` | Baseline and improved particle filters, Kalman filter and range-calibrated Kalman filter, calibration |
+| `fw_uav_config.py` | FW-UAV model corrections, the 13 keypoints (generated), camera, dt, range bins |
+| `fw_uav_io.py` | Reads the FW-UAV6DPose metadata, masks and model; projects keypoints, mask visibility cache |
+| `fw_uav_methods.py` | SQPnP measurement, synthetic calibration of R, `UAVKalman` |
+| `fw_uav_split.json` | Scene split (train / val / test) for the detector and its reasoning |
+
+Experiments, evaluation and tests:
+
+| File | Purpose |
+|---|---|
+| `run_phase3.py` | Phase 3: baseline particle filter experiments |
+| `run_phase4.py` | Phase 4: PnP experiments on the trajectory and on random poses |
+| `run_phase4b.py` | Phase 4b: keypoint-dropout sweep |
+| `run_phase5.py` | Phase 5: calibration, Kalman filter and improved particle filter experiments |
+| `run_phase5_ablation.py` | Phase 5: likelihood / particle-source ablation |
+| `run_phase5b.py` | Phase 5b: range-calibrated Kalman filter and re-initialisation |
+| `evaluate.py` | Phase 6: final evaluation of every method, tables and figures in `results/final/` |
+| `phase7a_model_check.py` | Phase 7a: silhouette-vs-mask check of the 3D model |
+| `phase7a_keypoints.py` | Phase 7a: chooses the 13 keypoints from the mesh |
+| `phase7a_evaluate.py` | Phase 7a: PnP and Kalman filter on projected keypoints of the real poses |
+| `phase7a_fix_report.py` | Phase 7a-fix: before / after report |
+| `run_phase7a_fix_synthetic.py` | Phase 7a-fix: synthetic check of the full-state re-initialisation |
+| `phase7b_prepare.py` | Phase 7b A: builds the YOLO-pose dataset and the label-check figures |
+| `phase7b_detect.py` | Phase 7b B: runs the detector on the val or test scenes and caches the predictions |
+| `phase7b_eval.py` | Phase 7b B: library (ground truth, keypoint diagnostics, OKS, PnP variants, Kalman wrapper) |
+| `phase7b_tune_val.py` | Phase 7b B: all threshold and method choices, on the val scenes only |
+| `phase7b_evaluate.py` | Phase 7b B: evaluates the test scenes once and draws the figures |
+| `test_phase1.py` ... `test_phase5.py`, `test_phase7a.py`, `test_phase7b.py` | Sanity checks (print PASS/FAIL) |
+| `run_all.sh` | Regenerates data and models and runs every simulation phase |
+| `run_tests.sh` | Runs the sanity checks of every phase |
+
+Other:
+
+| Path | Purpose |
+|---|---|
+| `models/classifier.pt`, `classifier_dropout.pt`, `error_samples.npy` | Trained classifiers and the classifier's validation errors |
+| `models/fw_uav_yolo_pose.pt` | Trained YOLO11n-pose detector (6 MB) |
+| `notebooks/train_yolo_pose_colab.ipynb` | Colab notebook that trains the detector |
+| `results/` | Figures and metrics per phase (`final/`, `phase7a/`, `phase7a_fix/`, `phase7b/`) |
+| `data/` | Generated data and the FW-UAV6DPose files (not in git) |
+| `requirements.txt`, `LICENSE`, `.gitignore`, `CLAUDE.md` | Dependencies, MIT licence, ignore rules, repository working rules |
+
+## Design decisions and deviations from the paper
+
+- **Ideal detector in Phases 1-6.** Like the paper, the simulation assumes a perfect keypoint detector (Gaussian pixel noise
+  only). The 14 keypoints are an approximate F-16 layout and occlusion uses a fuselage ellipsoid plus two wing triangles.
+- **Gimbal direction as a classifier input** (45 features). Pixels alone lose the viewing direction because the gimbal centres the leader:
+  with 42 features the top-1 accuracy was 16.0 %, with 45 it is 59.2 % (the paper reports 54 %). Pitch and yaw are sampled
+  (+/-10 deg) but are not part of the 4800-class label.
+- **Baseline particle filter:** constant-velocity dynamics with random acceleration and attitude rate are our own approximation
+  (the paper does not specify them); particles are not occluded; they are projected with the measured boresight; `eps`, the velocity range and when the weights are skipped are our choices.
+- **PnP is the improvement, not the classifier.** SQPnP needs no initial guess; classifier + PnP, a hybrid PnP and a classifier retrained
+  with keypoint dropout were tested, and all of them need at least 4 visible keypoints.
+- **Kalman filter:** a linear 12-state constant-velocity filter with the process noise derived from the particle filter's
+  `A_MAX` and `W_MAX`, a chi-squared gate, R calibrated on separate poses and, in Phase 5b, by range bin. The re-initialisation after 3 gated measurements was fixed in
+  advance, not tuned; Phase 7a-fix resets the whole state instead of the attitude only.
+- **FW-UAV6DPose model:** the OBJ is in centimetres and rotated 180 degrees about x relative to the dataset's object frame (found by comparing
+  silhouettes with the masks). Keypoints are chosen from the mesh by extreme-point rules. A keypoint counts as visible inside the
+  mask dilated by 2 px (self-occlusion ignored). dt = 0.1 s is assumed (no timestamps), scene `000125` is cut into two sequences,
+  and failure is defined relative to the range (10 % of the range or 20 degrees).
+- **No retuning on real data:** the filter constants of the simulation (`A_MAX`, `W_MAX`, `V_INIT_MAX`) are unchanged on FW-UAV6DPose, and
+  the classifier is not used there.
+- **Detector protocol:** a split by scene (never by frame) that keeps each background group inside one split, YOLO11n-pose at `imgsz=1280` without horizontal flip (the wing-root keypoints are not exact mirror
+  images), every threshold and method choice made on the validation scenes, and the test scenes run once.
+
+## Limitations and future work
+
+**Limitations**
+
+- Phases 1-6 are simulations: ideal keypoints with Gaussian noise, an approximate F-16 layout and a simple occlusion model.
+  The classifier is tested only there, and the base benchmark has no pose with fewer than 8 visible keypoints (the dropout experiment covers 4-6).
+- The Kalman filter does not improve the attitude (constant-rate model; the roll swings +/-15 deg in 5 s) and its constants were chosen for a 40-90 m
+  simulated approach. On FW-UAV6DPose accelerations reach about 8 m/s^2 and the relative speed up to 24 m/s, so the gate still rejects 5-7 % of the
+  measurements and the filter re-initialises often. Euler angles break down near +/-90 deg pitch (`000136`), and the result depends on the assumed dt.
+- The range-calibrated R is a fit to the simulator and noise model (the 100+ m bin of Phase 5b has only 55-60 poses); on FW-UAV6DPose it is calibrated on
+  synthetic poses with uniformly random attitude and Gaussian noise, which does not describe the detector's structured errors.
+- Phase 7a uses the validation split only (24 scenes, one camera, 2400 correlated frames) and ideal keypoints; the mesh has missing wing faces and is slightly asymmetric.
+- The detector was trained on 16 scenes (1,600 frames). The test set is 4 scenes (400 correlated frames) reaching 443 m, so nothing beyond 450 m is
+  tested. The choices made on the validation scenes are close to arbitrary because every method fails there, and the explanation by unseen orientations is consistent with the data but not proven.
+
+**Future work**
+
+- More training data: the full training split of FW-UAV6DPose (7,725 images, `training.zip`), and pose-diverse data or augmentation (rotation, scale, renderings of the 3D model at new orientations).
+- Higher-precision keypoints: a crop-based two-stage detector (the box is already accurate, median IoU 0.93) and a larger model than YOLO11n-pose; a keypoint-uncertainty output so that the filter can weight measurements.
+- A held-out-orientation experiment to test the orientation hypothesis.
+- A quaternion-based filter (multiplicative extended Kalman filter) instead of Euler angles, and filter constants fitted on scenes that are not used for the evaluation.
+
+## References
+
+1. R. Punnoose, "Vision-Based Precision Pose Estimation for Autonomous Formation Flying," Department of Aeronautics and Astronautics, Stanford University.
+2. S. Sharma, C. Beierle and S. D'Amico, "Pose estimation for non-cooperative spacecraft rendezvous using convolutional neural networks," in *2018 IEEE Aerospace Conference*, pp. 1-12, 2018.
+3. J. Liu, L. Plotegher, E. Roura and S. He, "MF-UAVPose6D: A Model-Free Monocular 6-DoF Pose Estimation Framework for Fixed-Wing UAVs," arXiv:2606.29697, 2026. Source of the FW-UAV6DPose dataset.
+4. D. Fu, W. Li, S. Han, X. Zhang, Z. Zhan and M. Yang, "The Aircraft Pose Estimation Based on a Convolutional Neural Network," *Mathematical Problems in Engineering*, vol. 2019, Article ID 7389652, 2019. doi:10.1155/2019/7389652
+5. Ultralytics YOLO (YOLO11-pose, ultralytics 8.4.172), https://github.com/ultralytics/ultralytics.
+
+## Development log
+
+The per-phase write-ups, in the order the work was done. Their content is unchanged; only the heading levels were moved down one step.
+
+### Phase 1: simulation and dataset generation
 
 | File | Purpose |
 |------|---------|
@@ -56,14 +300,14 @@ This writes `data/train.npz` and `data/val.npz` (keys `X`, `y`, `poses`) and
 
 ![sample keypoints](results/sample_keypoints.png)
 
-### Simplifications
+#### Simplifications
 
 - The 14 keypoints are an approximate F-16 layout, not measured from a real model.
 - Occlusion uses a simple fuselage ellipsoid plus two flat wing triangles; the tail,
   canopy and stores do not occlude anything.
 - Pitch and yaw are sampled (+/-10 deg) but are not part of the classification label.
 
-## Phase 2: pose classifier
+### Phase 2: pose classifier
 
 Implements the paper's classifier (Section IV-D): an MLP that maps the features to one of
 the 4800 grid cells. Its output is the coarse pose used to start the particle filter in
@@ -91,7 +335,7 @@ Adam, lr 1e-3, batch size 256, up to 40 epochs on `data/train.npz`, best checkpo
 validation accuracy, early stopping after 5 epochs without improvement. The model
 standardises its input with the training-set mean and std (stored with the weights).
 
-### Results (20,000 validation samples)
+#### Results (20,000 validation samples)
 
 | Metric | Ours | Paper |
 |--------|------|-------|
@@ -115,7 +359,7 @@ adjacent-bin mistakes.
 
 Training curve: `results/training_curve.png`.
 
-### Design note: why the gimbal direction is an input
+#### Design note: why the gimbal direction is an input
 
 The first version used only the 42 keypoint features and reached just 16.0 % top-1. The
 gimbal always centres the leader, so the pixels do not contain the viewing direction, and
@@ -133,7 +377,7 @@ Diagnostic runs with the same architecture and training recipe:
 The 45-feature, +/-10 deg row is the final model. Pitch and yaw stay at +/-10 deg in the
 actual design because the later phases must handle them.
 
-## Phase 3: baseline particle filter
+### Phase 3: baseline particle filter
 
 A faithful implementation of the paper's particle filter (Section IV-E), **without any
 improvements** (those are Phases 4-5). It is meant as a fair reproduction, including the
@@ -152,7 +396,7 @@ python test_phase3.py
 python run_phase3.py     # about 6 s for everything
 ```
 
-### Algorithm
+#### Algorithm
 
 Particle state `[x, y, z, roll, pitch, yaw, vx, vy, vz]` (pose as in `config.py`, relative velocity in m/s).
 
@@ -171,7 +415,7 @@ Particle state `[x, y, z, roll, pitch, yaw, vx, vy, vz]` (pose as in `config.py`
    random error samples, with the current weighted mean velocity. `alpha` follows a
    schedule (alpha = 1 is plain resampling).
 
-### Our simplifications
+#### Our simplifications
 
 - **Constant-velocity dynamics.** The paper treats the leader's unknown controls as a
   random disturbance but does not fully specify the dynamics, so this is our own
@@ -185,7 +429,7 @@ Particle state `[x, y, z, roll, pitch, yaw, vx, vy, vz]` (pose as in `config.py`
 - `eps`, the velocity range and when the weights are skipped are our choices; the paper
   gives no values.
 
-### Results
+#### Results
 
 Approach trajectory, no keypoint noise, 5 seeds (mean +/- std over seeds of the
 time-averaged error). The classifier-only estimate is deterministic. Attitude error is the
@@ -205,7 +449,7 @@ True vs estimated position, Config B (seed 0):
 
 ![trajectory](results/pf_baseline_trajectory.png)
 
-### Comparison with the paper
+#### Comparison with the paper
 
 Like the paper, the baseline filter does **not** clearly beat the classifier. Config A is
 *worse* than the classifier alone in both position and attitude: with only 1000 particles and
@@ -217,7 +461,7 @@ Neither configuration gets near an accurate estimate, which is the weakness Phas
 address. Only the trends should be compared with the paper: our keypoints, camera and
 occlusion model differ from the paper's, and the dynamics are our approximation.
 
-## Phase 4: PnP refinement
+### Phase 4: PnP refinement
 
 Three single-frame estimators, compared on the same noisy keypoints (the classifier is the
 Phase 2 model, not retrained, and sees the noisy features):
@@ -241,7 +485,7 @@ python test_phase4.py
 python run_phase4.py
 ```
 
-### Details
+#### Details
 
 - Only keypoints that are visible in the observation are used, with `config.KEYPOINTS` and `config.K`.
 - **Why at least 4 points**: each keypoint gives 2 equations (u, v) and a pose has 6 unknowns, so 3
@@ -263,7 +507,7 @@ python run_phase4.py
   with no solution would be left out of the error averages (and counted); there were none.
   Gross errors are kept in the means.
 
-### Experiments
+#### Experiments
 
 1. **Approach trajectory** (`simulator.approach_trajectory`, 101 steps), noise 0, 1, 2, 5 px, 5 seeds
    each, plus Phase 3 Config B (N = 5000, alpha = 0.9) as the reference. The observations are
@@ -271,7 +515,7 @@ python run_phase4.py
 2. **Random poses**: 2000 poses per noise level (seed 12345; training uses 0, validation 1),
    split by number of visible keypoints.
 
-### Results: approach trajectory
+#### Results: approach trajectory
 
 Mean +/- std over 5 seeds of the time-averaged error; "med" is the median over frames.
 
@@ -302,7 +546,7 @@ Error vs noise level:
 
 ![noise sweep](results/pnp_noise_sweep.png)
 
-### Results: random poses (2000 per noise level)
+#### Results: random poses (2000 per noise level)
 
 | Noise | Visible | n | Method | Pos mean / med [m] | Att mean / med [deg] | Fail % | Fallback % |
 |------|---------|---|--------|-------------------|---------------------|--------|-----------|
@@ -331,7 +575,7 @@ frame) has fewer than 8 visible keypoints, so the benchmark says nothing about f
 
 ![by visibility](results/pnp_by_visibility.png)
 
-### What this shows
+#### What this shows
 
 - **Zero-noise PnP is near-exact (about 1e-10 m) because the keypoints are ideal.** That is expected
   and not a result; the noise sweep and visibility breakdown are the meaningful parts.
@@ -352,7 +596,7 @@ frame) has fewer than 8 visible keypoints, so the benchmark says nothing about f
 - The classifier still provides a coarse pose when PnP cannot run (fewer than 4 visible keypoints;
   this is what the fallback returns) and a prior for a filter, which is Phase 5.
 
-## Phase 4b: hybrid PnP and keypoint dropout
+### Phase 4b: hybrid PnP and keypoint dropout
 
 Phase 4 could not test few-keypoint cases (no random pose has fewer than 8 visible keypoints),
 and a quick check suggested the classifier hurt there. This phase tests it properly.
@@ -417,7 +661,7 @@ Classifier-only numbers and no-solution counts are in `results/pnp_dropout_metri
 
 ![dropout sweep](results/pnp_dropout.png)
 
-### Conclusion
+#### Conclusion
 
 - **The Phase 4 hint was a training-distribution problem, not a PnP problem.** With the original
   classifier, classifier + PnP falls back to the coarse pose on about 4-5 % of frames when keypoints
@@ -440,7 +684,7 @@ Classifier-only numbers and no-solution counts are in `results/pnp_dropout_metri
   then it mainly removes occasional gross errors; it does not improve typical accuracy. These are
   simulated, ideal-detector results (our occlusion model, Gaussian noise only).
 
-## Phase 5: filtering on top of PnP
+### Phase 5: filtering on top of PnP
 
 Two filters that use the PnP pose as their measurement, compared with the Phase 3 baseline
 particle filter (untouched) and with single-frame PnP.
@@ -459,13 +703,13 @@ python test_phase5.py
 python run_phase5.py     # about 50 s
 ```
 
-### The PnP measurement
+#### The PnP measurement
 
 `hybrid_pnp` (Phase 4b) started from the **original** classifier (the same one the Phase 3 filter uses).
 If fewer than 4 keypoints are visible, or both solvers fail and the hybrid falls back to the coarse
 classifier pose, there is no measurement (a coarse pose is not trusted as a measurement).
 
-### Kalman filter
+#### Kalman filter
 
 - **State (12):** `[x, y, z, vx, vy, vz, roll, pitch, yaw, roll_rate, pitch_rate, yaw_rate]`,
   constant velocity for both position and angles, linear. Angle innovations are wrapped to [-180, 180).
@@ -496,7 +740,7 @@ classifier pose, there is no measurement (a coarse pose is not trusted as a meas
   (chi-squared 99.9 %, 6 dof); the rejections are counted. With no measurement or a rejected one the
   filter only predicts.
 
-### Improved particle filter
+#### Improved particle filter
 
 Same as the Phase 3 filter (dynamics, measured boresight, systematic resampling), with these changes only:
 Gaussian likelihood `w_i ~ exp(-SSE_i / (2 sigma^2))`, `sigma = max(noise_px, 1)` px, SSE over the
@@ -504,7 +748,7 @@ visible keypoints in log space; initial and fresh particles are drawn from `N(Pn
 classifier bin plus error samples; N = 1000, alpha = 0.9 every step. During an outage there is no PnP pose, so the
 "fresh" 10 % are copied from the current cloud (plain resampling).
 
-### Experiments
+#### Experiments
 
 Approach trajectory, noise 0, 1, 2, 5 px, 5 seeds (each method sees the same observations for a given
 seed). **A**: normal. **B**: all keypoints hidden for 4.0 <= t < 5.0 s (10 steps); single-frame PnP has no
@@ -560,7 +804,7 @@ output there. Cells are the mean over seeds of the per-run statistic (the standa
 ![outage](results/filter_outage.png)
 ![Kalman trajectory](results/filter_trajectory.png)
 
-### Discussion
+#### Discussion
 
 **Where filtering helps.**
 - *Position under noise.* With 1-5 px noise the Kalman filter roughly halves the position error of
@@ -613,7 +857,7 @@ particles it is given. The `1/(MSE+eps)` likelihood is a smaller second problem 
 polynomially, not sharply), worth about a factor of 1.5-2 once the particles are good.
 Both are simulation results with an idealised detector (Gaussian pixel noise, our occlusion model).
 
-## Phase 5b: range-calibrated noise and re-initialisation for the Kalman filter
+### Phase 5b: range-calibrated noise and re-initialisation for the Kalman filter
 
 Two fixes to the two Kalman problems found in Phase 5, chosen before looking at any result. The Phase 5
 filter (`KalmanFilter`) is unchanged; the fixed one is `RangeKalmanFilter` in `filters.py`.
@@ -670,7 +914,7 @@ The 100+ m calibration bin has only 55-60 poses (the approach rarely gets that f
 than in the other bins.
 
 
-## Phase 7a: FW-UAV6DPose evaluation
+### Phase 7a: FW-UAV6DPose evaluation
 
 Our pose pipeline run on the **real ground-truth poses, camera and 3D model of the FW-UAV6DPose dataset** (Liu et al.
 2026, the MF-UAVPose6D paper; please cite that paper for the dataset). No images are used and nothing is trained in
@@ -688,14 +932,14 @@ estimate the pose again. Phases 1-6 are untouched; everything here is in new fil
 | `test_phase7a.py` | Sanity checks (prints PASS/FAIL) |
 
 ```bash
-# needs data/fw_uav/val.zip, val_meta/ (the three JSON files per scene) and models/D0108-C20821-FixedWings-Merge.OBJ
+# needs data/fw_uav/val.zip, val_meta/ (the three JSON files per scene) and data/fw_uav/models/D0108-C20821-FixedWings-Merge.OBJ
 .venv/bin/python phase7a_model_check.py
 .venv/bin/python phase7a_keypoints.py
 .venv/bin/python phase7a_evaluate.py     # about 30 s after the one-off 75 s keypoint/mask cache
 .venv/bin/python test_phase7a.py
 ```
 
-### Data and what we used
+#### Data and what we used
 
 - **Split:** the validation split only: 24 scenes of 100 consecutive frames (2400 frames), BOP format, one UAV per
   frame, 1920 x 1080 images, one camera (fx = fy = 2058.73 px, principal point (960, 540)).
@@ -709,7 +953,7 @@ estimate the pose again. Phases 1-6 are untouched; everything here is in new fil
   fuselage, a straight tapered wing, two booms with four lift rotors, a T-tail) - much larger than the "small UAV"
   one might assume, so at 300 m it spans about 130-200 px.
 
-### The 3D model: two corrections
+#### The 3D model: two corrections
 
 The OBJ is an Unreal Engine export. It does **not** match the dataset's poses as it is; two corrections are needed
 (`fw_uav_config.py`), found by projecting the mesh with the ground-truth pose and comparing the silhouette with the
@@ -732,7 +976,7 @@ interior is empty when the triangles are filled, so the silhouette IoU is lower 
 boundaries line up), the mesh is **slightly asymmetric** (the left and right stabiliser tips are at y = -4.32 and
 +3.78 m, the centreline is at y = -0.27 m), and it has about 51,000 distinct vertices with thin parts (rotor blades).
 
-### Keypoints
+#### Keypoints
 
 13 keypoints on mesh vertices, chosen by extreme-point rules in the object frame (x forward, y right, z down), in
 `fw_uav_config.py`; figure `results/phase7a/uav_keypoints.png` shows them on the top, side and front views:
@@ -741,7 +985,7 @@ nose; tail trailing edge; fin top; left / right stabiliser tip; left / right win
 ![keypoints](results/phase7a/uav_keypoints.png)
 ![model vs mask](results/phase7a/model_vs_mask.png)
 
-### Observations
+#### Observations
 
 - **Projection:** each keypoint is projected with the frame's ground-truth pose and intrinsics.
 - **Visibility:** a keypoint is visible if it projects inside the image and **inside the visible mask dilated by 2 px**.
@@ -756,7 +1000,7 @@ nose; tail trailing edge; fin top; left / right stabiliser tip; left / right win
   `R_m2c`. Errors are the translation error (m) and the geodesic rotation error (deg). The Kalman state uses the
   project's pose vector `[x, y, z, roll, pitch, yaw]` with ZYX Euler angles of `R_m2c`.
 
-### Methods
+#### Methods
 
 - **PnP only (SQPnP)** on the visible keypoints, no initial guess. A *failure* is no solution, a translation error
   above 10 % of the range, or a rotation error above 20 deg (a relative version of the Phase 4 definition,
@@ -790,7 +1034,7 @@ nose; tail trailing edge; fin top; left / right stabiliser tip; left / right win
   approach, not for this aircraft at 164-518 m.** In the scenes we examined the relative speed is 5-9 m/s (median, up to 24 m/s) with
   accelerations up to 8 m/s^2 (the model allows about 2), so the model is mismatched; we did not change them.
 
-### Results
+#### Results
 
 All 2400 frames, mean over 5 seeds ± std over seeds of the pooled error, medians over frames.
 
@@ -862,7 +1106,7 @@ shown in the first row; the bins hold different scenes, so this mixes distance w
 | 000136 | 344-443 | 4.02 m / 2.97° | 2.08 m / 1.87° | 27 % | 5.0 |
 | 000137 | 343-357 | 3.72 m / 1.02° | 1.76 m / 0.56° | 0 % | 0.0 |
 
-### What changes at 164-518 m with a 32 m UAV
+#### What changes at 164-518 m with a 32 m UAV
 
 - **Absolute translation error is larger and grows with range, relative error is small.** At 2 px, PnP alone gives
   2.59 m / 1.36 deg (synthetic approach at 40-90 m: 0.89 m / 1.50 deg), which is
@@ -890,7 +1134,7 @@ shown in the first row; the bins hold different scenes, so this mixes distance w
   3.09 m at 0.1 s, 1.27 m at 0.2 s) and gates more measurements (19 %, 10 %, 4 %); we did not
   investigate why. The 0.1 s result is the main one; the others only show that the outcome depends on this assumption.
 
-### Limitations and next step
+#### Limitations and next step
 
 - Keypoints are ideal (the true projections) plus Gaussian noise; there is no detector, no outliers and no mislabelled
   keypoints. Visibility ignores self-occlusion; the dilated mask test is generous.
@@ -903,7 +1147,7 @@ shown in the first row; the bins hold different scenes, so this mixes distance w
 - **Next step (7b):** a YOLO keypoint detector trained on the dataset's images, replacing the projected keypoints.
 
 
-## Phase 7a-fix: full-state re-initialisation of the Kalman filter
+### Phase 7a-fix: full-state re-initialisation of the Kalman filter
 
 **Why.** On FW-UAV6DPose the Phase 5b filter locked out in some scenes (`000096`: 82 % of the measurements gated, 30 m mean
 translation error at 2 px): the position estimate drifts away from the true motion, every measurement is then rejected, and
@@ -921,7 +1165,7 @@ Phase 5b / Phase 6 scripts and tests request it explicitly (their stored results
 .venv/bin/python run_phase7a_fix_synthetic.py            # synthetic Phase 5/5b check
 ```
 
-### FW-UAV6DPose: before / after (all 2400 frames, mean ± std over 5 seeds)
+#### FW-UAV6DPose: before / after (all 2400 frames, mean ± std over 5 seeds)
 
 | Noise | Filter | Trans mean [m] | Trans median [m] | Rot mean [deg] | Rot median [deg] | Gate rejection | Re-inits |
 |---|---|---|---|---|---|---|---|
@@ -963,7 +1207,7 @@ Kalman beats PnP in translation in 20 of 24 scenes before and 22 after (2 px).
 - **dt sensitivity is much smaller after the fix:** 1.84 / 1.52 / 1.31 m translation at dt = 0.05 / 0.1 / 0.2 s, against
   5.51 / 3.09 / 1.27 m before. 0.1 s remains the main result (it was fixed in advance, not picked for its numbers).
 
-### Synthetic check (Phase 5 / 5b experiments, same seeds and settings)
+#### Synthetic check (Phase 5 / 5b experiments, same seeds and settings)
 
 Experiment A is **unchanged** at every noise level: no re-initialisation ever triggers in the normal run. In experiment B
 (outage 4-5 s) the full reset is **slightly worse in position after the outage** (it throws away a good position and velocity
@@ -984,7 +1228,7 @@ At 2 px the position error in the second after the outage is 0.80 m instead of 0
 0.42 instead of 0.36 m at 1 px); everything else, including the 4.8-8.9 deg attitude error after the outage, is the same to
 within 0.03 deg. Full numbers: `results/phase7a_fix/synthetic_comparison.json`.
 
-### Limitations that remain
+#### Limitations that remain
 
 - **Motion-model mismatch.** The filter's dynamics (`A_MAX` = 2 m/s^2 for position, `W_MAX` = 20 deg/s for attitude rates,
   `V_INIT_MAX` = 5 m/s) were chosen for a 40-90 m simulated approach. In the FW-UAV6DPose scenes we examined, accelerations reach
@@ -1000,7 +1244,7 @@ within 0.03 deg. Full numbers: `results/phase7a_fix/synthetic_comparison.json`.
   **quaternion-based filter** (a multiplicative extended Kalman filter on the rotation) is the natural fix and future work.
 - The re-initialisation threshold (3) was fixed in Phase 5b and is unchanged.
 
-## Phase 7b: YOLO-pose keypoint detector and image-based evaluation
+### Phase 7b: YOLO-pose keypoint detector and image-based evaluation
 
 Phase 7a used the true keypoint projections plus Gaussian noise. Phase 7b replaces them with a **learned detector** on the
 real images. **Part A** prepares the data and the training notebook (training ran on Google Colab); **part B** (the last
@@ -1028,7 +1272,7 @@ generalisation to new orientations and the precision of its keypoints, not the p
 # then upload data/fw_uav/yolo_fw_uav.zip to Google Drive: MyDrive/formation-pose/ and run the notebook
 ```
 
-### Scene split (by scene, never by frame)
+#### Scene split (by scene, never by frame)
 
 16 train / 4 val / 4 test scenes of the 24 validation scenes (2400 frames, 100 per scene).
 
@@ -1049,7 +1293,7 @@ generalisation to new orientations and the precision of its keypoints, not the p
   consistent with its own mask (silhouette IoU 0.72-0.77 on both sides of the cut), so its labels are valid and it is used
   for training; the cut matters only for temporal filtering.
 
-### Labels (YOLO-pose format)
+#### Labels (YOLO-pose format)
 
 - One object per frame, class 0 (`uav`). The **box** is the bounding box of the visible-object mask plus 4 px on every side,
   normalised.
@@ -1070,14 +1314,14 @@ generalisation to new orientations and the precision of its keypoints, not the p
 
 ![label check](results/phase7b/label_check_1.png)
 
-### Package
+#### Package
 
 Train and val images are converted to JPEG (quality 95) and written with the labels to `yolo_fw_uav/{images,labels}/{train,val}`
 plus `data.yaml` (relative paths), zipped to `data/fw_uav/yolo_fw_uav.zip` (267 MB, 2000 images, **no test-scene image**).
 An Ultralytics 8.4.171 smoke test on CPU (one epoch at 320 px on 32 images) read the dataset without errors (0 corrupt labels,
 `kpt_shape` and `flip_idx` accepted), which checks the format, not the quality of any training.
 
-### Training plan (Colab, `notebooks/train_yolo_pose_colab.ipynb`)
+#### Training plan (Colab, `notebooks/train_yolo_pose_colab.ipynb`)
 
 `yolo11n-pose.pt` (the smallest YOLO pose model), `imgsz=1280` (the aircraft is small in the 1920 x 1080 frames), 100 epochs,
 patience 20 on the validation split, batch 8 on a free T4, **horizontal flip off** (`fliplr=0`, because the wing-root keypoints are not exact mirror images, so
@@ -1085,7 +1329,7 @@ flipped labels would carry up to about 5 px of error; `flip_idx` stays in `data.
 the training cell resumes from `last.pt` after a disconnect. The notebook ends by printing the validation box and pose mAP.
 The notebook itself has not been run on a GPU yet.
 
-### Phase 7b: image-based evaluation
+#### Phase 7b: image-based evaluation
 
 **Training.** YOLO11n-pose, `imgsz=1280`, no horizontal flip, on the 16 training scenes (1,600 images), early stopping on the 4 val
 scenes: 69 epochs (the patience of 20 stopped it; the best epoch was 49), 2.1 h on a Colab T4. On the val scenes the best model
@@ -1108,7 +1352,7 @@ keypoints projected with the true pose (visible = inside the mask dilated by 2 p
 .venv/bin/python phase7b_detect.py --split test && .venv/bin/python phase7b_evaluate.py
 ```
 
-#### Keypoint diagnostics
+##### Keypoint diagnostics
 
 | | Val (000042-000045) | Test (000029, 000030, 000136, 000137) |
 |---|---|---|
@@ -1152,7 +1396,7 @@ better on val (median 16 px against 56-80 px below it) and it holds 19 % of the 
 
 ![swap rate](results/phase7b/test_swap_rate_by_keypoint.png)
 
-#### Why is the pose mAP low?
+##### Why is the pose mAP low?
 
 1. **Not swaps or leading/trailing confusion.** Raw swap rates look high (37-43 %), but they are inflated: when the keypoints are
    scattered 50-80 px from the truth, a point is often closer to the partner's true location by chance (50 % is chance level).
@@ -1178,7 +1422,7 @@ agrees with the outcome at the extremes (test 000136 at 6 degrees works, val 000
 the aircraft is seen against it, so other differences between scenes matter too. Pinning this down needs an experiment
 (for example training with held-out orientation ranges), which was outside this phase.
 
-#### Pose methods on the detected keypoints (test scenes, 400 frames)
+##### Pose methods on the detected keypoints (test scenes, 400 frames)
 
 | Method | Failure % | Translation mean / median [m] | Rotation mean / median [deg] | No solution % |
 |---|---|---|---|---|
@@ -1211,7 +1455,7 @@ a range effect. Per scene (SQPnP / Kalman failure %, SQPnP translation median, r
 (Sequence figure: test scene 000029, chosen in advance as the middle-range scene. The estimate is stable but biased: the
 roll/pitch/yaw solution is a consistent wrong orientation, and the Kalman filter smooths the noise without correcting the bias.)
 
-#### Comparison with Phase 7a (same test scenes, ideal keypoints plus Gaussian noise, 5 seeds)
+##### Comparison with Phase 7a (same test scenes, ideal keypoints plus Gaussian noise, 5 seeds)
 
 | Keypoints | PnP fail % | PnP translation mean / median [m] | PnP rotation mean / median [deg] | Kalman fail % | Kalman translation mean / median [m] | Kalman rotation mean / median [deg] |
 |---|---|---|---|---|---|---|
@@ -1230,7 +1474,7 @@ like far more. The reason is that the detector's errors are not independent nois
 wrong orientation), which a Gaussian model with the same pixel size under-represents. On val the detector corresponds to
 about 39 px (translation median) and more than 60 px (rotation median).
 
-#### Is the image -> pose pipeline usable?
+##### Is the image -> pose pipeline usable?
 
 **No, not with this detector.** On the test scenes 70 % of the frames fail, the rotation error has a median of 45 degrees (mean
 63 degrees) and only the near scene 000030 and the far scene 000136 give plausible rotations (8-13 degrees median). Even there
@@ -1257,7 +1501,7 @@ is limited by the detector, and by two separate things:**
   independent Gaussian noise gives on the same scenes (16 m median, 27 % failures). More data alone may not fix this; the
   keypoints must also become more precise and less biased.
 
-#### Limitations
+##### Limitations
 
 - Only 4 test scenes (400 strongly correlated frames); the per-scene numbers are better evidence than the pooled ones. The test
   set reaches 443 m, so beyond 450 m nothing is tested.
@@ -1267,7 +1511,7 @@ is limited by the detector, and by two separate things:**
 - The nearest-training-pose distance is a single, coarse explanation variable (see above).
 - dt = 0.1 s is assumed (no timestamps), as in Phase 7a.
 
-#### Future work
+##### Future work
 
 - **More training data:** train on the full training split of FW-UAV6DPose (7,725 images, `training.zip`) instead of 1,600 frames,
   and add pose-diverse data or augmentation (rotation, scale, synthetic renderings of the 3D model at new orientations).
