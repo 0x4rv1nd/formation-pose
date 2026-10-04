@@ -1,0 +1,28 @@
+{
+ "train": {
+  "images": 3967,
+  "mean_visible_keypoints": 12.950844466851525
+ },
+ "val": {
+  "images": 331,
+  "mean_visible_keypoints": 12.924471299093655
+ },
+ "zip_mb": 626.8,
+ "flip_idx": [
+  0,
+  1,
+  2,
+  4,
+  3,
+  9,
+  10,
+  11,
+  12,
+  5,
+  6,
+  7,
+  8
+ ],
+ "jpeg_quality": 95,
+ "box_margin_px": 4
+}

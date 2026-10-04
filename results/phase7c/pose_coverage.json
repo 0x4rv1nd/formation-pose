@@ -1,0 +1,57 @@
+{
+ "metric": "rotation angle (deg) of the ground-truth model-to-camera rotation to the nearest training frame",
+ "n_train_frames": {
+  "7b (16 scenes, all frames)": 1600,
+  "7c (65+20 scenes, every 2nd)": 3967
+ },
+ "scenes": {
+  "000029": {
+   "7b (16 scenes, all frames)": {
+    "median": 17.329460891026002,
+    "p90": 19.087105480957714,
+    "share_above_30deg": 0.0
+   },
+   "7c (65+20 scenes, every 2nd)": {
+    "median": 12.600725425261539,
+    "p90": 17.97578375763254,
+    "share_above_30deg": 0.0
+   }
+  },
+  "000030": {
+   "7b (16 scenes, all frames)": {
+    "median": 17.579433310414075,
+    "p90": 20.104025910871766,
+    "share_above_30deg": 0.0
+   },
+   "7c (65+20 scenes, every 2nd)": {
+    "median": 10.817800102937369,
+    "p90": 14.531039981525453,
+    "share_above_30deg": 0.0
+   }
+  },
+  "000136": {
+   "7b (16 scenes, all frames)": {
+    "median": 5.831918532715751,
+    "p90": 11.916030955933383,
+    "share_above_30deg": 0.0
+   },
+   "7c (65+20 scenes, every 2nd)": {
+    "median": 5.180388805527587,
+    "p90": 7.787313026388691,
+    "share_above_30deg": 0.0
+   }
+  },
+  "000137": {
+   "7b (16 scenes, all frames)": {
+    "median": 19.154861434259345,
+    "p90": 22.64412841116841,
+    "share_above_30deg": 0.0
+   },
+   "7c (65+20 scenes, every 2nd)": {
+    "median": 12.423050742999628,
+    "p90": 15.220210383192702,
+    "share_above_30deg": 0.0
+   }
+  }
+ }
+}

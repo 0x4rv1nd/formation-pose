@@ -1518,3 +1518,70 @@ is limited by the detector, and by two separate things:**
 - **Higher-precision keypoints:** a crop-based two-stage detector (the box is already accurate, median IoU 0.93, so a second network
   can regress the keypoints from a high-resolution crop of the aircraft) and a larger model than YOLO11n-pose.
 - Quantify the orientation hypothesis with a held-out-orientation experiment, and use a keypoint-uncertainty output so that the filter can weight measurements.
+
+### Phase 7c, part A: training data from the full training split
+
+Phase 7b trained on 16 scenes and failed on new orientations. Phase 7c trains the same detector (YOLO11n-pose, same settings) on
+as much of the 109 scenes (85 in `training.zip`, 24 in `val.zip`) as possible while keeping the 4 test scenes clean. Part A
+(this section) prepares the data and the notebook; training and evaluation come next.
+
+| File | Purpose |
+|---|---|
+| `phase7c_background_groups.py` | Background groups of all 109 scenes, the exclusion list, the validation group -> `results/phase7c/background_groups.json`, `.md` |
+| `fw_uav_split_7c.json` | The Phase 7c split |
+| `phase7c_prepare.py` | Split, pose-coverage table, YOLO-pose dataset, zip and label-check figures (`--stage split`, `--stage build`) |
+| `phase7c_dupcheck.py`, `phase7c_dupcheck_fullres.py`, `phase7c_model_check.py` | Checks of `training.zip` (duplicates of the val / test frames, 3D-model fit), `results/phase7c/*.json` |
+| `notebooks/train_yolo_pose_colab_7c.ipynb` | Colab notebook (own run name, so it does not resume the 7b run) |
+
+#### Grouping rule
+
+Scenes of the same sky render are nearly identical in the background. Each scene gets a background image (the per-pixel median
+of a 64x36 grey thumbnail over its frames; the aircraft is small and moves, so it drops out). Two scenes are the same background
+if these images differ by less than **1.25 grey levels** (mean absolute difference, 0-255). Scenes of the same sky are 0.2-1.2
+apart, the next distance is 1.6 and then more than 2.9, while different skies are a median of about 20 apart. A **background group**
+is a connected set of scenes under this rule. This replaces the by-eye groups of Phase 7b (the table is in
+`results/phase7c/background_groups.md`).
+
+- **Test (unchanged, so 7b and 7c stay comparable):** 000029, 000030, 000136, 000137.
+- **Excluded from training (16 `training.zip` scenes in the two test groups):** 000021-000028 and 000128-000135.
+  000131 and 000133-000135 are 1.0-1.2 grey levels from test scene 000136 / 000137 (closer than 000130 is to 000137), so they
+  count as the test background.
+- **Validation (new): the complete group 000150-000153** of `training.zip` (4 scenes, 331 frames, all used). It is a group of its own: no
+  test scene, no `val.zip` scene, nearest other scene 9.2 grey levels away (26 from the test scenes), and it is held out of training as a whole.
+  The other groups of 2-6 `training.zip` scenes have only 2-3 scenes (000099-101, 000146-148 and others) or lie close to
+  other scenes (000156-157 are 3.8 from 000155). Its range is 371-494 m against 175-443 m for the test, so validation is on the
+  far side.
+- **Training:** the remaining 65 `training.zip` scenes + the 16 Phase 7b training scenes + the old validation scenes 000042-000045
+  (their background mates are no longer excluded). 85 scenes, **every 2nd frame** (3967 images, frames 0, 2, 4, ...), since
+  consecutive frames are nearly identical.
+
+| Split | Scenes | Images |
+|---|---|---|
+| train | 65 `training.zip` + 16 (7b train) + 4 (old val) | 3967 |
+| val | 4 (000150-000153) | 331 (all frames) |
+| test | 4 | 400 (never read in part A) |
+| excluded | 16 | 0 |
+
+Labels, keypoints, box margin and JPEG quality are those of Phase 7b; the labels of the 1000 images from `val.zip` that are in
+both datasets are byte-identical to the 7b label files. The zip (`data/fw_uav/yolo_fw_uav_7c.zip`, 627 MB, not in git) contains no test
+or excluded scene (checked on the file names).
+
+Caveat: the clear-sky renders are generic, and one large group (36 scenes, including the 7b training scenes and the old validation
+scenes) contains several different flights. The rule keeps test and validation backgrounds out of training; it cannot make
+the scenes within the training set independent of each other.
+
+#### Pose coverage of the test scenes
+
+Median rotation angle between each test frame's ground-truth orientation and the nearest training frame (share of frames
+farther than 30 degrees in brackets):
+
+| test scene | 7b (16 scenes, 1600 frames) | 7c (85 scenes, 3967 frames) |
+|---|---|---|
+| 000029 | 17.3 (0 %) | 12.6 (0 %) |
+| 000030 | 17.6 (0 %) | 10.8 (0 %) |
+| 000136 | 5.8 (0 %) | 5.2 (0 %) |
+| 000137 | 19.2 (0 %) | 12.4 (0 %) |
+
+The coverage improves on all four test scenes (by 1-7 degrees; almost nothing on 000136, which was already close to 7b training poses).
+This is a rotation-only measure of how close the training data comes to the test poses; it does not show that the detector will
+generalise better.
