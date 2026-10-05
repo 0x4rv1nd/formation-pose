@@ -22,13 +22,18 @@ import filters
 import simulator
 from run_phase5 import errors, stat
 
+# Keypoint noise levels (pixels), random seeds and particle count used for every variant.
 NOISES = [0.0, 2.0, 5.0]
 SEEDS = range(5)
 N_PARTICLES = 1000
 
 
 class AblationPF(filters.ImprovedParticleFilter):
-    """ImprovedParticleFilter with each of its two changes switchable."""
+    """ImprovedParticleFilter with each of its two changes switchable.
+
+    gaussian=False falls back to the Phase 3 weighting 1/(MSE+eps).
+    pnp_source=False falls back to drawing fresh particles from the classifier.
+    """
 
     def __init__(self, model, noise_px, R_ref, gaussian, pnp_source, seed=0):
         super().__init__(model, N_PARTICLES, filters.alpha_every_step(0.9), noise_px, R_ref, seed)
@@ -36,16 +41,19 @@ class AblationPF(filters.ImprovedParticleFilter):
         self.pnp_source = pnp_source
 
     def _draw_from_classifier(self, obs, m):
+        # PnP source: improved filter's own sampling. Otherwise use the Phase 3 sampling.
         if self.pnp_source:
             return super()._draw_from_classifier(obs, m)
         return filters.ParticleFilter._draw_from_classifier(self, obs, m)
 
     def update_weights(self, obs):
+        # Gaussian likelihood: improved filter's own weighting. Otherwise use the Phase 3 weighting.
         if self.gaussian:
             return super().update_weights(obs)
         return filters.ParticleFilter.update_weights(self, obs)
 
 
+# (row label, gaussian likelihood?, PnP particle source?) for the four ablation rows.
 VARIANTS = [
     ("1/(MSE+eps) + classifier (baseline design, N = 1000)", False, False),
     ("Gaussian + classifier", True, False),
@@ -55,6 +63,7 @@ VARIANTS = [
 
 
 def main():
+    """Run every variant at every noise level and print the README table."""
     with open(os.path.join(config.RESULTS_DIR, "kf_noise_calibration.json")) as f:
         calib = json.load(f)["by_noise_px"]
     model = classifier.load_model()
@@ -74,6 +83,7 @@ def main():
             result[(name, noise)] = (np.nanmean(pos), np.nanmean(att))
         print(f"  {name} done")
 
+    # Markdown table: one row per variant, one "position / attitude" cell per noise level.
     print("\n| Likelihood / particle source | " + " | ".join(f"{n:g} px" for n in NOISES) + " |")
     print("|------|" + "------|" * len(NOISES))
     for name, _, _ in VARIANTS:
